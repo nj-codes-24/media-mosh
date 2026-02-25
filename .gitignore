@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+
+# Your specific build and error logs
+build
+build_utf8
+ts_error
+tsc_errors
+*.log
+
+# Large files and archives
+*.zip
+
+# TypeScript caching (safe to ignore)
+*.tsbuildinfo
+
+# OS generated files
+.DS_Store
