@@ -2,217 +2,637 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Image as ImageIcon, Video, Music, Search, ArrowLeft, FileText } from 'lucide-react';
+import { Sparkles, Image as ImageIcon, Video, Music, ArrowLeft, FileText, Search } from 'lucide-react';
 import { toolRegistry, ToolMetadata, MediaType } from '@/lib/toolRegistry';
 import UniversalWorkspace from '@/components/UniversalWorkspace';
 
 async function loadProcessor(toolId: string) {
   try {
     switch (toolId) {
-      case 'bg-remover': return (await import('@/processors/bgremover')).bgRemoverProcessor;
-      case 'exif-remover': return (await import('@/processors/exifremover')).exifRemoverProcessor;
-      case 'img-compressor': return (await import('@/processors/imagecompressor')).imageCompressorProcessor;
+      case 'bg-remover':        return (await import('@/processors/bgremover')).bgRemoverProcessor;
+      case 'exif-remover':      return (await import('@/processors/exifremover')).exifRemoverProcessor;
+      case 'img-compressor':    return (await import('@/processors/imagecompressor')).imageCompressorProcessor;
       case 'palette-generator': return (await import('@/processors/paletteGenerator')).paletteGenerator;
-      case 'photo-restore': return (await import('@/processors/photoRestorer')).photoRestorer;
-      case 'image-converter': return (await import('@/processors/imageFormatConverter')).imageFormatConverter;
-      case 'ai-upscale': return (await import('@/processors/imageUpscaler')).imageUpscaler;
-      case 'auto-subtitle': return (await import('@/processors/subtitleProcessor')).subtitleProcessor;
-      case 'video-compressor': return (await import('@/processors/videocompressor')).videoCompressorProcessor;
-      case 'audio-extraction': return (await import('@/processors/audioextraction')).audioExtractionProcessor;
-      case 'video-stabilizer': return (await import('@/processors/videoStabilizer')).videoStabilizer;
-      case 'video-bg-remover': return (await import('@/processors/videoBgRemover')).videoBgRemoverProcessor;
-      case 'frame-extractor': return (await import('@/processors/frameExtractor')).frameExtractor;
-      case 'audio-converter': return (await import('@/processors/audioConverter')).audioConverter;
-      case 'audio-splitter': return (await import('@/processors/audioSplitter')).audioSplitter;
-      case 'voice-changer': return (await import('@/processors/voiceChanger')).voiceChanger;
-      case 'text-to-speech': return async (file: File | string, options: any) => { return file; };
-      
-      // PDF PROCESSORS
-      case 'pdf-page-manager': return (await import('@/processors/pdfPageManager')).pdfPageManager;
-      case 'pdf-from-images':
-      case 'pdf-merger':
-      case 'pdf-remove-page':
-      case 'pdf-split':
-      case 'pdf-reorder':
-      case 'pdf-rotate':
-        return async (file: File | string, options: any) => { return file; };
-      case 'pdf-compress': return (await import('@/processors/pdfCompressor')).pdfCompressor;
-      case 'pdf-converter': return (await import('@/processors/pdfFormatConverter')).pdfFormatConverter;
-
-      default:
-        console.error(`No processor found for tool: ${toolId}`);
-        return null;
+      case 'photo-restore':     return (await import('@/processors/photoRestorer')).photoRestorer;
+      case 'image-converter':   return (await import('@/processors/imageFormatConverter')).imageFormatConverter;
+      case 'ai-upscale':        return (await import('@/processors/imageUpscaler')).imageUpscaler;
+      case 'auto-subtitle':     return (await import('@/processors/subtitleProcessor')).subtitleProcessor;
+      case 'video-compressor':  return (await import('@/processors/videocompressor')).videoCompressorProcessor;
+      case 'audio-extraction':  return (await import('@/processors/audioextraction')).audioExtractionProcessor;
+      case 'video-stabilizer':  return (await import('@/processors/videoStabilizer')).videoStabilizer;
+      case 'video-bg-remover':  return (await import('@/processors/videoBgRemover')).videoBgRemoverProcessor;
+      case 'frame-extractor':   return (await import('@/processors/frameExtractor')).frameExtractor;
+      case 'audio-converter':   return (await import('@/processors/audioConverter')).audioConverter;
+      case 'audio-splitter':    return (await import('@/processors/audioSplitter')).audioSplitter;
+      case 'voice-changer':     return (await import('@/processors/voiceChanger')).voiceChanger;
+      case 'text-to-speech':    return async (f: File | string) => f;
+      case 'pdf-page-manager':  return (await import('@/processors/pdfPageManager')).pdfPageManager;
+      case 'pdf-from-images': case 'pdf-merger': case 'pdf-remove-page':
+      case 'pdf-split': case 'pdf-reorder': case 'pdf-rotate':
+        return async (f: File | string) => f;
+      case 'pdf-compress':      return (await import('@/processors/pdfCompressor')).pdfCompressor;
+      case 'pdf-converter':     return (await import('@/processors/pdfFormatConverter')).pdfFormatConverter;
+      default: return null;
     }
-  } catch (error) {
-    console.error(`Failed to load processor for ${toolId}:`, error);
-    return null;
-  }
+  } catch (e) { console.error(e); return null; }
 }
 
-export default function MarvelousStudio() {
-  const [view, setView] = useState<'landing' | 'dashboard'>('landing');
-  const [activeTab, setActiveTab] = useState<MediaType>('image');
-  const [selectedTool, setSelectedTool] = useState<ToolMetadata | null>(null);
-  const [processor, setProcessor] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoadingProcessor, setIsLoadingProcessor] = useState(false);
+const CATS = [
+  { type: 'image' as MediaType, icon: ImageIcon, label: 'IMAGE', desc: 'AI Visual Processing' },
+  { type: 'video' as MediaType, icon: Video,     label: 'VIDEO', desc: 'Professional Motion'  },
+  { type: 'audio' as MediaType, icon: Music,     label: 'AUDIO', desc: 'Studio Grade Audio'   },
+  { type: 'pdf'   as MediaType, icon: FileText,  label: 'PDF',   desc: 'Document Workflows'   },
+];
 
-  const tools = toolRegistry
-    .filter(t => t.category === activeTab)
-    .filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
+// ─── Marquee ──────────────────────────────────────────────────────────────────
+function Marquee() {
+  const items = ['BG REMOVAL','AI UPSCALE','VIDEO COMPRESS','AUDIO SPLIT','PDF MERGE','VOICE CHANGER','FRAME EXTRACT','PHOTO RESTORE','FORMAT CONVERT','AUTO SUBTITLE'];
+  const all = [...items,...items,...items,...items];
+  return (
+    <div style={{ overflow:'hidden', whiteSpace:'nowrap', display:'flex', width:'100%' }}>
+      <motion.div style={{ display:'flex', gap:28, alignItems:'center', flexShrink:0 }}
+        animate={{ x:['0%','-50%'] }} transition={{ duration:28, ease:'linear', repeat:Infinity }}>
+        {all.map((t,i) => (
+          <span key={i} style={{ fontSize:10, fontFamily:'DM Mono,monospace', fontWeight:700, letterSpacing:'0.35em', textTransform:'uppercase', color:'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', gap:16 }}>
+            {t}<span style={{ width:3, height:3, borderRadius:'50%', background:'rgba(255,68,0,0.45)', display:'inline-block' }}/>
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Ambient Background ───────────────────────────────────────────────────────
+function AmbientBg() {
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden' }}>
+      <div style={{ position:'absolute', top:'42%', left:'60%', transform:'translate(-50%,-50%)', width:720, height:580, background:'radial-gradient(ellipse,rgba(255,68,0,0.07) 0%,transparent 70%)', filter:'blur(60px)', borderRadius:'50%' }}/>
+      <svg width="100%" height="100%" style={{ position:'absolute', inset:0 }} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <filter id="ob"><feGaussianBlur stdDeviation="3"/></filter>
+          <filter id="dg"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g transform="translate(900,445)">
+          <ellipse cx="0" cy="0" rx="340" ry="128" fill="none" stroke="rgba(255,68,0,0.07)" strokeWidth="14" filter="url(#ob)" transform="rotate(-15)"/>
+          <ellipse cx="0" cy="0" rx="340" ry="128" fill="none" stroke="rgba(255,68,0,0.38)" strokeWidth="1" transform="rotate(-15)"/>
+          <motion.g animate={{ rotate:[0,360] }} transition={{ duration:14, repeat:Infinity, ease:'linear' }}>
+            <circle cx="340" cy="0" r="8" fill="rgba(255,130,30,0.9)" filter="url(#dg)"/>
+            <circle cx="340" cy="0" r="3.5" fill="white" opacity="0.95"/>
+            <line x1="295" y1="-6" x2="335" y2="-0.5" stroke="rgba(255,100,20,0.45)" strokeWidth="3.5" strokeLinecap="round"/>
+          </motion.g>
+        </g>
+        <g transform="translate(900,455)">
+          <ellipse cx="0" cy="0" rx="230" ry="86" fill="none" stroke="rgba(255,68,0,0.04)" strokeWidth="10" filter="url(#ob)" transform="rotate(10)"/>
+          <ellipse cx="0" cy="0" rx="230" ry="86" fill="none" stroke="rgba(255,68,0,0.25)" strokeWidth="0.8" transform="rotate(10)"/>
+          <motion.g animate={{ rotate:[360,0] }} transition={{ duration:20, repeat:Infinity, ease:'linear' }}>
+            <circle cx="230" cy="0" r="5.5" fill="rgba(255,120,30,0.85)" filter="url(#dg)"/>
+            <circle cx="230" cy="0" r="2" fill="white" opacity="0.9"/>
+          </motion.g>
+        </g>
+        <g transform="translate(900,440)">
+          <ellipse cx="0" cy="0" rx="136" ry="52" fill="none" stroke="rgba(255,68,0,0.2)" strokeWidth="0.7" transform="rotate(-25)"/>
+          <motion.g animate={{ rotate:[0,360] }} transition={{ duration:9, repeat:Infinity, ease:'linear' }}>
+            <circle cx="136" cy="0" r="4" fill="rgba(255,140,40,0.9)" filter="url(#dg)"/>
+            <circle cx="136" cy="0" r="1.5" fill="white" opacity="0.9"/>
+          </motion.g>
+        </g>
+        {Array.from({length:10}).map((_,i)=><line key={i} x1={0} y1={520+i*38} x2={1440} y2={520+i*38} stroke={`rgba(255,68,0,${0.025*(1-i/10)})`} strokeWidth="0.4"/>)}
+        {Array.from({length:18}).map((_,i)=><line key={i} x1={i*90} y1={520} x2={i*90} y2={900} stroke={`rgba(255,68,0,${0.018*(1-Math.abs(i-9)/9)})`} strokeWidth="0.4"/>)}
+        <g stroke="rgba(255,68,0,0.18)" strokeWidth="1.2" fill="none">
+          <path d="M22 22L22 52M22 22L52 22"/><path d="M1418 22L1418 52M1418 22L1388 22"/>
+          <path d="M22 878L22 848M22 878L52 878"/><path d="M1418 878L1418 848M1418 878L1388 878"/>
+        </g>
+        <g opacity="0.12">
+          <circle cx="1310" cy="140" r="24" fill="none" stroke="#FF4400" strokeWidth="0.8"/>
+          <circle cx="1310" cy="140" r="15" fill="none" stroke="#FF4400" strokeWidth="0.4"/>
+          <line x1="1286" y1="140" x2="1300" y2="140" stroke="#FF4400" strokeWidth="0.8"/>
+          <line x1="1320" y1="140" x2="1334" y2="140" stroke="#FF4400" strokeWidth="0.8"/>
+          <line x1="1310" y1="116" x2="1310" y2="130" stroke="#FF4400" strokeWidth="0.8"/>
+          <line x1="1310" y1="150" x2="1310" y2="164" stroke="#FF4400" strokeWidth="0.8"/>
+        </g>
+      </svg>
+      <div className="grain-overlay" style={{ position:'absolute', inset:0, opacity:0.04 }}/>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CAMERA SVG — realistic modern touch-screen body
+// ViewBox: 800 × 500. Large LCD screen spans the left/center back, safely 
+// stopping before the physical grip controls on the right.
+// ═══════════════════════════════════════════════════════════════════════════════
+function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
+  const [hov, setHov] = useState<string|null>(null);
+
+  // SVG canvas size
+  const VW = 800, VH = 500;
+  // Displayed size (scaled down to fit)
+  const DW = 720, DH = 450;
+  const scale = DW / VW;
+
+  // Modern widescreen LCD covering the left and center, preserving right-hand controls
+  const LCD = { x: 36, y: 94, w: 500, h: 356 };
+
+  return (
+    <div style={{ position:'relative', width:DW, height:DH }}>
+      {/* Drop shadow wrapper */}
+      <div style={{ position:'absolute', inset:0, filter:'drop-shadow(0 28px 60px rgba(0,0,0,0.95)) drop-shadow(0 0 50px rgba(255,68,0,0.07))' }}>
+
+        {/* ═══ SVG CAMERA BODY ═══ */}
+        <svg width={DW} height={DH} viewBox={`0 0 ${VW} ${VH}`} style={{ display:'block' }}>
+          <defs>
+            <linearGradient id="body" x1="0%" y1="0%" x2="80%" y2="100%">
+              <stop offset="0%" stopColor="#2e2b28"/><stop offset="50%" stopColor="#1a1815"/><stop offset="100%" stopColor="#0d0c0b"/>
+            </linearGradient>
+            <linearGradient id="topplate" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#383330"/><stop offset="100%" stopColor="#1e1b18"/>
+            </linearGradient>
+            <linearGradient id="grip" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#0a0908"/><stop offset="100%" stopColor="#161412"/>
+            </linearGradient>
+            <radialGradient id="shutter-btn" cx="38%" cy="28%" r="72%">
+              <stop offset="0%" stopColor="#FF6633"/><stop offset="100%" stopColor="#BB1800"/>
+            </radialGradient>
+            <linearGradient id="dial-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#3c3830"/><stop offset="100%" stopColor="#211f1b"/>
+            </linearGradient>
+            <linearGradient id="lcd-screen" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#0f0d0a"/><stop offset="100%" stopColor="#040302"/>
+            </linearGradient>
+            <filter id="glow-soft">
+              <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="lcd-glow">
+              <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          {/* ══ MAIN BODY ══ */}
+          <rect x="2" y="72" width="796" height="408" rx="18" fill="url(#body)"/>
+          {/* Top bevel highlight */}
+          <rect x="2" y="72" width="796" height="3" rx="2" fill="rgba(255,255,255,0.045)"/>
+          {/* Bottom shadow */}
+          <rect x="8" y="462" width="784" height="14" rx="7" fill="rgba(0,0,0,0.6)"/>
+
+          {/* ══ GRIP (right bulge) ══ */}
+          <path d="M600,72 Q642,72 668,92 L694,135 L710,480 L600,480 Z" fill="url(#grip)"/>
+          {/* Grip edge highlight */}
+          <path d="M602,74 Q638,74 663,94 L689,137 L705,478 L602,478 Z" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+
+          {/* ══ TOP PLATE ══ */}
+          <rect x="2" y="2" width="796" height="72" rx="14" fill="url(#topplate)"/>
+          <rect x="2" y="62" width="796" height="12" fill="rgba(0,0,0,0.38)"/>
+          {/* Top plate bevel */}
+          <rect x="2" y="2" width="796" height="2.5" rx="1.5" fill="rgba(255,255,255,0.08)"/>
+
+          {/* ══ VIEWFINDER HUMP ══ */}
+          <rect x="170" y="0" width="148" height="32" rx="8" fill="#1c1a17"/>
+          <rect x="180" y="2" width="128" height="24" rx="5" fill="#111009" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
+          <rect x="188" y="5" width="112" height="16" rx="4" fill="rgba(16,24,44,0.95)" stroke="rgba(255,68,0,0.16)" strokeWidth="0.8"/>
+          {/* VF frame guides */}
+          <rect x="194" y="7" width="28" height="3" rx="1" fill="rgba(255,255,255,0.05)"/>
+          <rect x="266" y="7" width="28" height="3" rx="1" fill="rgba(255,255,255,0.05)"/>
+
+          {/* Hot shoe */}
+          <rect x="218" y="0" width="68" height="6" rx="1.5" fill="#2a2720" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5"/>
+          {[226,234,242,250,258,266,274,282].map((x,i)=>(
+            <line key={i} x1={x} y1="0" x2={x} y2="6" stroke="rgba(0,0,0,0.5)" strokeWidth="1.5"/>
+          ))}
+
+          {/* ══ MODE DIAL (top-left) ══ */}
+          <circle cx="96" cy="38" r="34" fill="url(#dial-grad)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.4"/>
+          <circle cx="96" cy="38" r="28" fill="none" stroke="rgba(255,255,255,0.045)" strokeWidth="0.8"/>
+          {/* Dial knurling */}
+          {Array.from({length:20}).map((_,i)=>{
+            const a=(i/20)*Math.PI*2-Math.PI/2;
+            return <line key={i} x1={96+26*Math.cos(a)} y1={38+26*Math.sin(a)} x2={96+33*Math.cos(a)} y2={38+33*Math.sin(a)} stroke="rgba(255,255,255,0.1)" strokeWidth="1.3"/>;
+          })}
+          {/* Dial center */}
+          <circle cx="96" cy="38" r="18" fill="#131110" stroke="rgba(255,68,0,0.3)" strokeWidth="1"/>
+          <text x="96" y="44" textAnchor="middle" fill="rgba(255,68,0,0.95)" fontSize="13" fontFamily="DM Mono,monospace" fontWeight="700">M</text>
+          {/* Dial labels */}
+          {[['A',-78],['S',-48],['P',-16],['C1',18],['C2',50],['AUTO',82]].map(([lbl,deg],i)=>{
+            const a=(Number(deg)-90)*Math.PI/180;
+            return <text key={i} x={96+42*Math.cos(a)} y={38+42*Math.sin(a)+3} textAnchor="middle" fill="rgba(255,255,255,0.18)" fontSize="6.5" fontFamily="DM Mono,monospace">{lbl as string}</text>;
+          })}
+          {/* Dial indicator mark */}
+          <line x1="96" y1="6" x2="96" y2="10" stroke="rgba(255,68,0,0.8)" strokeWidth="2" strokeLinecap="round"/>
+
+          {/* ══ SHUTTER BUTTON ══ */}
+          <circle cx="626" cy="34" r="24" fill="#232019" stroke="rgba(255,255,255,0.1)" strokeWidth="1.2"/>
+          <circle cx="626" cy="34" r="18" fill="url(#shutter-btn)"/>
+          <circle cx="626" cy="34" r="12" fill="rgba(255,50,0,0.72)"/>
+          {/* Shutter glare */}
+          <ellipse cx="620" cy="28" rx="6" ry="3.5" fill="rgba(255,255,255,0.24)" transform="rotate(-22 620 28)"/>
+
+          {/* ══ EXPOSURE DIAL (next to shutter) ══ */}
+          <circle cx="680" cy="38" r="20" fill="#1c1b17" stroke="rgba(255,255,255,0.09)" strokeWidth="1"/>
+          {Array.from({length:14}).map((_,i)=>{
+            const a=(i/14)*Math.PI*2;
+            return <line key={i} x1={680+14*Math.cos(a)} y1={38+14*Math.sin(a)} x2={680+19*Math.cos(a)} y2={38+19*Math.sin(a)} stroke="rgba(255,255,255,0.08)" strokeWidth="1.3"/>;
+          })}
+          <circle cx="680" cy="38" r="9" fill="#131211" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
+
+          {/* ══ TOP-RIGHT BUTTONS ══ */}
+          {[[574,22,10],[544,20,9],[516,20,9]].map(([cx,cy,r],i)=>(
+            <g key={i}>
+              <circle cx={cx} cy={cy} r={r} fill="#1e1c18" stroke="rgba(255,255,255,0.1)" strokeWidth="0.9"/>
+            </g>
+          ))}
+          <text x="574" y="26" textAnchor="middle" fill="rgba(255,255,255,0.22)" fontSize="7" fontFamily="DM Mono,monospace">▶</text>
+          <text x="544" y="24" textAnchor="middle" fill="rgba(255,255,255,0.18)" fontSize="6.5" fontFamily="DM Mono,monospace">MENU</text>
+          <text x="516" y="24" textAnchor="middle" fill="rgba(255,255,255,0.15)" fontSize="6.5" fontFamily="DM Mono,monospace">INFO</text>
+
+          {/* ══ TOP LCD PANEL ══ */}
+          <rect x="420" y="10" width="112" height="50" rx="5" fill="#070707" stroke="rgba(255,68,0,0.24)" strokeWidth="0.9"/>
+          <rect x="424" y="14" width="104" height="42" rx="3" fill="rgba(255,68,0,0.02)"/>
+          <text x="476" y="32" textAnchor="middle" fill="rgba(255,68,0,0.72)" fontSize="12" fontFamily="DM Mono,monospace" letterSpacing="1">1/250</text>
+          <text x="428" y="48" fill="rgba(255,255,255,0.28)" fontSize="8.5" fontFamily="DM Mono,monospace">f/2.8</text>
+          <text x="478" y="48" fill="rgba(255,255,255,0.22)" fontSize="8.5" fontFamily="DM Mono,monospace">ISO800</text>
+
+          {/* ══ RIGHT BODY PHYSICAL CONTROLS ══ */}
+          {/* D-pad ring */}
+          <circle cx="686" cy="330" r="36" fill="#0d0d0d" stroke="rgba(255,255,255,0.09)" strokeWidth="1.2"/>
+          <circle cx="686" cy="330" r="15" fill="#0b0a09" stroke="rgba(255,68,0,0.22)" strokeWidth="1"/>
+          {/* D-pad arms */}
+          {[['▲',686,302],['▼',686,358],['◀',658,330],['▶',714,330]].map(([s,x,y])=>(
+            <text key={s as string} x={x as number} y={(y as number)+3.5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="11" fontFamily="sans-serif">{s as string}</text>
+          ))}
+          <text x="686" y="334.5" textAnchor="middle" fill="rgba(255,68,0,0.6)" fontSize="8.5" fontFamily="DM Mono,monospace" fontWeight="700">OK</text>
+
+          {/* Scroll wheel / rear dial */}
+          <circle cx="752" cy="258" r="30" fill="#151412" stroke="rgba(255,255,255,0.09)" strokeWidth="1.1"/>
+          {Array.from({length:20}).map((_,i)=>{
+            const a=(i/20)*Math.PI*2;
+            return <line key={i} x1={752+23*Math.cos(a)} y1={258+23*Math.sin(a)} x2={752+29*Math.cos(a)} y2={258+29*Math.sin(a)} stroke="rgba(255,255,255,0.09)" strokeWidth="1.5"/>;
+          })}
+          <circle cx="752" cy="258" r="13" fill="#0d0c0b" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
+          <text x="752" y="262.5" textAnchor="middle" fill="rgba(255,255,255,0.1)" fontSize="6" fontFamily="DM Mono,monospace">DIAL</text>
+
+          {/* Small function buttons */}
+          {[[582,380,13],[618,374,11.5],[652,380,12.5]].map(([cx,cy,r],i)=>(
+            <g key={i}>
+              <circle cx={cx} cy={cy} r={r} fill="#141312" stroke="rgba(255,255,255,0.09)" strokeWidth="0.8"/>
+            </g>
+          ))}
+          <text x="582" y="384" textAnchor="middle" fill="rgba(255,255,255,0.15)" fontSize="6" fontFamily="DM Mono,monospace">AE-L</text>
+          <text x="618" y="378" textAnchor="middle" fill="rgba(255,255,255,0.13)" fontSize="6" fontFamily="DM Mono,monospace">AF-L</text>
+          <text x="652" y="384" textAnchor="middle" fill="rgba(255,68,0,0.38)" fontSize="7" fontFamily="DM Mono,monospace">AF</text>
+
+          {/* ══ LARGE LEFT/CENTER LCD SCREEN BEZEL ══ */}
+          {/* Outer bezel/frame */}
+          <rect x={LCD.x-4} y={LCD.y-4} width={LCD.w+8} height={LCD.h+8} rx="10" fill="#0c0a08" stroke="rgba(255,68,0,0.38)" strokeWidth="1.8"/>
+          {/* Screen dark background */}
+          <rect x={LCD.x} y={LCD.y} width={LCD.w} height={LCD.h} rx="7" fill="url(#lcd-screen)"/>
+          {/* Screen outer glow */}
+          <rect x={LCD.x-4} y={LCD.y-4} width={LCD.w+8} height={LCD.h+8} rx="10" fill="none" stroke="rgba(255,68,0,0.1)" strokeWidth="10" filter="url(#lcd-glow)"/>
+          {/* Top glare */}
+          <rect x={LCD.x+2} y={LCD.y+2} width={LCD.w-4} height={LCD.h*0.3} rx="6" fill="rgba(255,255,255,0.022)"/>
+
+          {/* ══ SD / PORT DOOR (right edge) ══ */}
+          <rect x="774" y="200" width="22" height="88" rx="7" fill="#161412" stroke="rgba(255,255,255,0.07)" strokeWidth="0.9"/>
+          <line x1="785" y1="214" x2="785" y2="278" stroke="rgba(255,255,255,0.04)" strokeWidth="0.9" strokeDasharray="4 8"/>
+          <text x="784" y="218" textAnchor="middle" fill="rgba(255,255,255,0.08)" fontSize="6.5" fontFamily="DM Mono,monospace" transform="rotate(90 784 218)">SD</text>
+
+          {/* ══ BOTTOM PLATE ══ */}
+          <rect x="2" y="474" width="796" height="24" rx="10" fill="#0d0c0b" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5"/>
+          <text x="28" y="489" fill="rgba(255,255,255,0.05)" fontSize="7" fontFamily="DM Mono,monospace" letterSpacing="1.5">SN: MM-X1-2025  MADE FOR CREATORS</text>
+          {/* Tripod mount */}
+          <circle cx="330" cy="486" r="8.5" fill="#090808" stroke="rgba(255,255,255,0.1)" strokeWidth="0.9"/>
+          <line x1="323" y1="486" x2="337" y2="486" stroke="rgba(255,255,255,0.14)" strokeWidth="0.9"/>
+          <line x1="330" y1="479" x2="330" y2="493" stroke="rgba(255,255,255,0.14)" strokeWidth="0.9"/>
+          {/* Battery door */}
+          <rect x="380" y="476" width="52" height="18" rx="4" fill="#0b0a09" stroke="rgba(255,255,255,0.08)" strokeWidth="0.7"/>
+          <text x="406" y="488" textAnchor="middle" fill="rgba(255,255,255,0.07)" fontSize="6" fontFamily="DM Mono,monospace">BATT</text>
+        </svg>
+      </div>
+
+      {/* ═══ HTML LCD OVERLAY ═══ */}
+      <div style={{
+        position: 'absolute',
+        left:  Math.round(LCD.x * scale),
+        top:   Math.round(LCD.y * scale),
+        width: Math.round(LCD.w * scale),
+        height:Math.round(LCD.h * scale),
+        borderRadius: 6,
+        overflow: 'hidden',
+        background: 'radial-gradient(ellipse at 40% 30%, #0e0c09 0%, #040302 100%)',
+      }}>
+        {/* Scanlines */}
+        <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(0deg,rgba(0,0,0,0.065) 0px,rgba(0,0,0,0.065) 1px,transparent 1px,transparent 4px)', pointerEvents:'none', zIndex:10 }}/>
+        {/* Glare */}
+        <div style={{ position:'absolute', top:0, left:0, right:0, height:'30%', background:'linear-gradient(180deg,rgba(255,255,255,0.03) 0%,transparent 100%)', pointerEvents:'none', zIndex:11 }}/>
+
+        <div style={{ position:'relative', zIndex:20, display:'flex', flexDirection:'column', height:'100%', padding:'20px 24px' }}>
+          {/* Status bar */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12, flexShrink:0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+              <motion.span animate={{ opacity:[1,0.15,1] }} transition={{ duration:1.5, repeat:Infinity }}
+                style={{ width:5, height:5, borderRadius:'50%', background:'#FF4400', boxShadow:'0 0 8px #FF4400', display:'inline-block' }}/>
+              <span style={{ fontSize:7, fontFamily:'DM Mono,monospace', letterSpacing:'0.4em', color:'rgba(255,68,0,0.65)', textTransform:'uppercase' }}>Select Mode</span>
+            </div>
+            <span style={{ fontSize:6, fontFamily:'DM Mono,monospace', color:'rgba(255,255,255,0.12)', letterSpacing:'0.22em' }}>MM-STUDIO</span>
+          </div>
+
+          {/* 2x2 Grid for options */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:16, flex:1, margin:'2px 0' }}>
+            {CATS.map((cat, i) => (
+              <motion.button
+                key={cat.type}
+                initial={{ opacity:0, scale:0.92 }}
+                animate={{ opacity:1, scale:1 }}
+                transition={{ delay:i*0.05, duration:0.3, ease:[0.22, 1, 0.36, 1] }}
+                onMouseEnter={() => setHov(cat.type)}
+                onMouseLeave={() => setHov(null)}
+                onClick={() => onSelect(cat.type)}
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.96, transition: { duration: 0.1, ease: 'easeOut' } }}
+                style={{
+                  background: hov===cat.type ? 'rgba(255,68,0,0.15)' : 'rgba(255,255,255,0.035)',
+                  border: `1px solid ${hov===cat.type ? 'rgba(255,68,0,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: 10,
+                  padding: '16px 20px',
+                  display: 'flex', flexDirection:'column', alignItems:'flex-start', justifyContent: 'center', gap:10,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                  boxShadow: hov===cat.type ? '0 0 24px rgba(255,68,0,0.15)' : 'none',
+                  textAlign: 'left',
+                  position: 'relative', overflow:'hidden',
+                }}
+              >
+                {hov===cat.type && <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(255,68,0,0.08) 0%,transparent 55%)', pointerEvents:'none' }}/>}
+                <cat.icon style={{ width:18, height:18, color:hov===cat.type?'#FF4400':'rgba(255,255,255,0.42)', transition:'color 0.2s ease', flexShrink:0, marginBottom:2 }}/>
+                <div>
+                  <div style={{ fontSize:15, fontFamily:'Bebas Neue,sans-serif', letterSpacing:'0.14em', color:hov===cat.type?'#FF4400':'rgba(255,255,255,0.88)', lineHeight:1, transition:'color 0.2s ease' }}>
+                    {cat.label}
+                  </div>
+                  <div style={{ fontSize:6.5, fontFamily:'DM Mono,monospace', letterSpacing:'0.18em', color:'rgba(255,255,255,0.22)', textTransform:'uppercase', marginTop:8 }}>
+                    {cat.desc}
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:14, paddingTop:12, borderTop:'1px solid rgba(255,255,255,0.05)', flexShrink:0 }}>
+            <span style={{ fontSize:5.5, fontFamily:'DM Mono,monospace', color:'rgba(255,255,255,0.09)', letterSpacing:'0.18em' }}>30+ TOOLS READY</span>
+            <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+              <motion.span animate={{ opacity:[1,0.3,1] }} transition={{ duration:2.2, repeat:Infinity }}
+                style={{ width:4, height:4, borderRadius:'50%', background:'#34d399', boxShadow:'0 0 6px #34d399', display:'inline-block' }}/>
+              <span style={{ fontSize:5.5, fontFamily:'DM Mono,monospace', color:'rgba(52,211,153,0.52)', letterSpacing:'0.18em' }}>LIVE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Landing ──────────────────────────────────────────────────────────────────
+function Landing({ onEnter }: { onEnter: (t: MediaType) => void }) {
+  return (
+    <motion.div key="landing" initial={{ opacity:0 }} animate={{ opacity:1 }}
+      exit={{ scale:1.2, opacity:0, filter:'blur(20px)', transition:{ duration:0.65, ease:[0.4,0,0.2,1] } }}
+      style={{ height:'100vh', background:'#080808', color:'white', overflow:'hidden', display:'flex', flexDirection:'column', fontFamily:"'DM Sans',sans-serif", position:'relative' }}
+    >
+      <AmbientBg/>
+
+      {/* NAV */}
+      <motion.nav initial={{ opacity:0, y:-14 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1, duration:0.5 }}
+        style={{ position:'relative', zIndex:60, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'20px 44px', flexShrink:0 }}
+      >
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ width:9, height:9, borderRadius:'50%', background:'#FF4400', boxShadow:'0 0 12px #FF4400', display:'inline-block' }}/>
+          <span style={{ fontSize:12, fontFamily:'DM Mono,monospace', fontWeight:700, letterSpacing:'0.3em', textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Media Mosh</span>
+        </div>
+        {/* Nav items removed as requested to keep it super clean */}
+      </motion.nav>
+
+      {/* HERO */}
+      <div style={{ flex:1, display:'flex', alignItems:'center', position:'relative', zIndex:20, minHeight:0, padding:'0 44px', overflow:'hidden' }}>
+
+        {/* LEFT — Title */}
+        <div style={{ width:'38%', flexShrink:0 }}>
+          <motion.div initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.18, duration:0.5 }}
+            style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}
+          >
+            <div style={{ height:1, width:32, background:'#FF4400' }}/>
+            <span style={{ fontSize:9.5, fontFamily:'DM Mono,monospace', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.44em', color:'#FF4400' }}>All-in-one platform</span>
+          </motion.div>
+          <div style={{ overflow:'hidden' }}>
+            <motion.h1 initial={{ y:110 }} animate={{ y:0 }} transition={{ delay:0.22, duration:0.85, ease:[0.22,1,0.36,1] }}
+              style={{ margin:0, fontFamily:'Bebas Neue,sans-serif', fontSize:'clamp(96px,12vw,165px)', fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.01em', color:'white', lineHeight:0.86 }}
+            >MEDIA</motion.h1>
+          </div>
+          <div style={{ overflow:'hidden' }}>
+            <motion.h1 initial={{ y:110 }} animate={{ y:0 }} transition={{ delay:0.33, duration:0.85, ease:[0.22,1,0.36,1] }}
+              style={{ margin:0, fontFamily:'Bebas Neue,sans-serif', fontSize:'clamp(96px,12vw,165px)', fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.01em', lineHeight:0.86, WebkitTextStroke:'2.5px rgba(255,255,255,0.13)', color:'transparent' }}
+            >MOSH</motion.h1>
+          </div>
+        </div>
+
+        {/* RIGHT — Camera */}
+        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', minWidth:0, position:'relative' }}>
+          <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:720, height:500, background:'radial-gradient(ellipse,rgba(255,68,0,0.065) 0%,transparent 68%)', filter:'blur(55px)', borderRadius:'50%', pointerEvents:'none' }}/>
+          <motion.div animate={{ y:[0,-9,0] }} transition={{ duration:5, repeat:Infinity, ease:'easeInOut' }}>
+            <Camera onSelect={onEnter}/>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* MARQUEE */}
+      <div style={{ position:'relative', zIndex:20, borderTop:'1px solid rgba(255,255,255,0.05)', padding:'11px 0', flexShrink:0 }}>
+        <Marquee/>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function Dashboard({ activeTab, setActiveTab, selectedTool, setSelectedTool, processor, setProcessor, searchQuery, setSearchQuery, isLoading, setIsLoading, onHome }: {
+  activeTab: MediaType; setActiveTab: (t: MediaType) => void;
+  selectedTool: ToolMetadata | null; setSelectedTool: (t: ToolMetadata | null) => void;
+  processor: any; setProcessor: (p: any) => void;
+  searchQuery: string; setSearchQuery: (q: string) => void;
+  isLoading: boolean; setIsLoading: (v: boolean) => void;
+  onHome: () => void;
+}) {
+  const tools = toolRegistry.filter(t=>t.category===activeTab).filter(t=>t.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleToolSelect = async (tool: ToolMetadata) => {
-    setSelectedTool(tool);
-    setIsLoadingProcessor(true);
+    setSelectedTool(tool); setIsLoading(true);
     try {
-      const loadedProcessor = await loadProcessor(tool.id);
-      const processorInstance = typeof loadedProcessor === 'function' ? { process: loadedProcessor } : loadedProcessor;
-      setProcessor(processorInstance);
-    } catch (error) {
-      console.error('Failed to load processor:', error);
-      setProcessor(null);
-    } finally {
-      setIsLoadingProcessor(false);
-    }
+      const lp = await loadProcessor(tool.id);
+      setProcessor(typeof lp==='function' ? { process:lp } : lp);
+    } catch(e) { console.error(e); setProcessor(null); }
+    finally { setIsLoading(false); }
   };
 
   const handleTabChange = (tab: MediaType) => {
-    setActiveTab(tab);
-    setSelectedTool(null);
-    setProcessor(null);
-    setSearchQuery('');
+    setActiveTab(tab); setSelectedTool(null); setProcessor(null); setSearchQuery('');
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-cyan-500/30 overflow-hidden relative font-sans">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full animate-pulse" />
-      </div>
+    <motion.div key="dashboard"
+      initial={{ opacity:0, scale:0.9, filter:'blur(16px)' }}
+      animate={{ opacity:1, scale:1, filter:'blur(0px)', transition:{ duration:0.6, ease:[0.22,1,0.36,1] } }}
+      exit={{ opacity:0, transition:{ duration:0.3 } }}
+      style={{ display:'flex', height:'100vh', background:'#080808' }}
+    >
+      {/* Sidebar */}
+      <aside style={{ width:248, borderRight:'1px solid rgba(255,255,255,0.05)', background:'#0b0b0b', display:'flex', flexDirection:'column', flexShrink:0 }}>
+        <div style={{ padding:'22px 18px 14px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18 }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:'#FF4400', boxShadow:'0 0 8px #FF4400', display:'inline-block' }}/>
+            <span style={{ fontSize:11, fontFamily:'DM Mono,monospace', fontWeight:700, letterSpacing:'0.3em', textTransform:'uppercase', color:'rgba(255,255,255,0.28)' }}>Media Mosh</span>
+          </div>
+          <button onClick={onHome}
+            style={{ display:'flex', alignItems:'center', gap:7, color:'rgba(255,255,255,0.18)', background:'none', border:'none', cursor:'pointer', marginBottom:16, fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', transition:'color 0.18s' }}
+            onMouseEnter={e=>(e.currentTarget.style.color='white')}
+            onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.18)')}
+          ><ArrowLeft style={{ width:12, height:12 }}/> Home</button>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:4, background:'rgba(255,255,255,0.03)', borderRadius:12, padding:4 }}>
+            {(['image','video','audio','pdf'] as MediaType[]).map(tab=>(
+              <button key={tab} onClick={()=>handleTabChange(tab)}
+                style={{ padding:'6px 0', borderRadius:8, fontSize:8, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.12em', fontWeight:700, background:activeTab===tab?'#FF4400':'none', color:activeTab===tab?'white':'rgba(255,255,255,0.18)', border:'none', cursor:'pointer', transition:'all 0.2s' }}
+              >{tab}</button>
+            ))}
+          </div>
+        </div>
+        <div className="cscroll" style={{ flex:1, overflowY:'auto', padding:'4px 10px 20px', display:'flex', flexDirection:'column', gap:2 }}>
+          {toolRegistry.filter(t=>t.category===activeTab).map(tool=>(
+            <button key={tool.id} disabled={tool.status==='soon'} onClick={()=>tool.status==='ready'&&handleToolSelect(tool)}
+              style={{ width:'100%', textAlign:'left', padding:'10px 13px', borderRadius:11, fontSize:12, fontWeight:500, display:'flex', alignItems:'center', justifyContent:'space-between', background:selectedTool?.id===tool.id?'rgba(255,68,0,0.1)':'none', border:selectedTool?.id===tool.id?'1px solid rgba(255,68,0,0.22)':'1px solid transparent', color:selectedTool?.id===tool.id?'#FF4400':tool.status==='soon'?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.3)', cursor:tool.status==='soon'?'not-allowed':'pointer', transition:'all 0.2s' }}
+              onMouseEnter={e=>{ if(tool.status==='ready'&&selectedTool?.id!==tool.id) e.currentTarget.style.color='rgba(255,255,255,0.65)'; }}
+              onMouseLeave={e=>{ if(tool.status==='ready'&&selectedTool?.id!==tool.id) e.currentTarget.style.color='rgba(255,255,255,0.3)'; }}
+            >
+              {tool.name}
+              {tool.status==='soon'&&<span style={{ fontSize:8, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.2em', opacity:0.3 }}>Soon</span>}
+            </button>
+          ))}
+        </div>
+      </aside>
 
-      <AnimatePresence mode="wait">
-        {view === 'landing' ? (
-          <motion.section key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }} transition={{ duration: 0.8 }} className="relative z-10 h-screen flex flex-col items-center justify-center px-6">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center mb-20">
-              <h1 className="text-8xl font-black tracking-tighter mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/20">CREative suite</h1>
-              <div className="h-1 w-24 bg-cyan-500 mx-auto rounded-full shadow-[0_0_20px_rgba(6,182,212,0.8)]" />
-            </motion.div>
-
-            <div className="flex gap-10 max-w-6xl w-full">
-              {[{ type: 'image', icon: ImageIcon, desc: 'AI Visual Processing' }, { type: 'video', icon: Video, desc: 'Professional Motion Tools' }, { type: 'audio', icon: Music, desc: 'Studio Grade Audio' }, { type: 'pdf', icon: FileText, desc: 'Document Workflows' }].map((item) => (
-                <motion.button key={item.type} layoutId={`card-${item.type}`} whileHover={{ y: -15, rotateX: 5, rotateY: -5 }} onClick={() => { setActiveTab(item.type as MediaType); setView('dashboard'); }} className="flex-1 aspect-[3/4] rounded-[3rem] border border-white/10 bg-white/5 backdrop-blur-3xl p-10 flex flex-col items-center justify-between group shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform"><item.icon className="w-10 h-10 text-white" /></div>
-                  <div className="text-center relative z-10">
-                    <h2 className="text-4xl font-black uppercase tracking-widest">{item.type}</h2>
-                    <p className="text-zinc-500 text-xs font-bold uppercase mt-3 tracking-[0.3em]">{item.desc}</p>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </motion.section>
-        ) : (
-          <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative z-10 flex h-screen">
-            <aside className="w-80 border-r border-white/10 bg-black/40 backdrop-blur-3xl p-8 flex flex-col z-20">
-              <button onClick={() => { setView('landing'); setSelectedTool(null); setProcessor(null); }} className="flex items-center gap-3 text-zinc-500 hover:text-white transition-all mb-16 group text-[10px] font-black uppercase tracking-[0.3em]"><ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Return Home</button>
-              <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                {toolRegistry.filter(t => t.category === activeTab).map(tool => (
-                  <button key={tool.id} disabled={tool.status === 'soon'} onClick={() => tool.status === 'ready' && handleToolSelect(tool)} className={`w-full text-left px-6 py-4 rounded-2xl text-[13px] font-bold transition-all border flex items-center justify-between ${selectedTool?.id === tool.id ? 'bg-white text-black border-white shadow-[0_0_40px_rgba(255,255,255,0.15)]' : tool.status === 'soon' ? 'bg-white/5 text-zinc-800 border-white/5 opacity-40 cursor-not-allowed' : 'bg-white/5 text-zinc-500 border-white/5 hover:border-white/20 hover:text-white'}`}>
-                    {tool.name}
-                    {tool.status === 'soon' && <span className="text-[8px] opacity-50 uppercase">Soon</span>}
-                  </button>
+      {/* Main */}
+      <main style={{ flex:1, overflowY:'auto', background:'#080808' }}>
+        <AnimatePresence mode="wait">
+          {!selectedTool ? (
+            <motion.div key={`grid-${activeTab}`} initial={{ opacity:0,y:10 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0 }} transition={{ duration:0.25 }} style={{ padding:'38px 40px' }}>
+              <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:36 }}>
+                <div>
+                  <h2 style={{ fontFamily:'Bebas Neue,sans-serif', fontSize:52, textTransform:'uppercase', color:'#FF4400', lineHeight:1, marginBottom:5 }}>{activeTab}</h2>
+                  <p style={{ fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,255,255,0.16)' }}>{tools.length} tools available</p>
+                </div>
+                <div style={{ position:'relative' }}>
+                  <Search style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)', width:14, height:14, color:'rgba(255,255,255,0.15)' }}/>
+                  <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search tools..."
+                    style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'10px 16px 10px 38px', fontSize:13, width:210, outline:'none', color:'rgba(255,255,255,0.52)', fontFamily:"'DM Sans',sans-serif", caretColor:'#FF4400' }}
+                  />
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
+                {tools.map((tool,i)=>(
+                  <motion.button key={tool.id} initial={{ opacity:0,y:12 }} animate={{ opacity:1,y:0 }} transition={{ delay:i*0.03, duration:0.28 }}
+                    whileHover={tool.status==='ready'?{y:-4}:{}}
+                    onClick={()=>tool.status==='ready'&&handleToolSelect(tool)}
+                    style={{ height:186, borderRadius:18, border:'1px solid rgba(255,255,255,0.05)', padding:'20px', display:'flex', flexDirection:'column', justifyContent:'space-between', alignItems:'flex-start', textAlign:'left', background:'rgba(255,255,255,0.018)', cursor:tool.status==='ready'?'pointer':'not-allowed', opacity:tool.status==='soon'?0.3:1, overflow:'hidden', position:'relative', transition:'border-color 0.2s, transform 0.2s' }}
+                    onMouseEnter={e=>{ if(tool.status==='ready') e.currentTarget.style.borderColor='rgba(255,68,0,0.26)'; }}
+                    onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,0.05)'; }}
+                  >
+                    {tool.status==='soon'&&<div style={{ position:'absolute', top:13, right:13, padding:'2px 8px', borderRadius:999, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)' }}><span style={{ fontSize:8, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.2em', color:'rgba(255,255,255,0.18)' }}>Soon</span></div>}
+                    <div style={{ width:38, height:38, borderRadius:11, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <tool.icon style={{ width:16, height:16, color:'rgba(255,255,255,0.35)' }}/>
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize:14, fontWeight:700, letterSpacing:'-0.01em', color:'rgba(255,255,255,0.72)', marginBottom:5 }}>{tool.name}</h3>
+                      <p style={{ fontSize:11.5, color:'rgba(255,255,255,0.2)', lineHeight:1.55 }}>{tool.description}</p>
+                    </div>
+                  </motion.button>
                 ))}
               </div>
-            </aside>
-
-            <main className="flex-1 overflow-y-auto p-16 relative">
-              <AnimatePresence mode="wait">
-                {!selectedTool ? (
-                  <motion.div key={`grid-${activeTab}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.4 }}>
-                    <div className="flex items-center justify-between mb-20">
-                      <nav className="flex gap-16">
-                        {(['image', 'video', 'audio', 'pdf'] as MediaType[]).map((tab) => (
-                          <button key={tab} onClick={() => handleTabChange(tab)} className={`text-xs font-black uppercase tracking-[0.4em] transition-all relative ${activeTab === tab ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}>
-                            {tab}
-                            {activeTab === tab && <motion.div layoutId="nav-line" className="absolute -bottom-4 left-0 right-0 h-0.5 bg-cyan-500 shadow-[0_0_10px_#06b6d4]" />}
-                          </button>
-                        ))}
-                      </nav>
-                      <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600 group-focus-within:text-cyan-500 transition-colors" />
-                        <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-sm w-80 focus:outline-none focus:border-white/30 transition-all placeholder:text-zinc-700 font-bold" placeholder="Search tools..." />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-                      {tools.map((tool) => (
-                        <motion.button key={tool.id} whileHover={tool.status === 'ready' ? { scale: 1.03, y: -10 } : {}} onClick={() => tool.status === 'ready' && handleToolSelect(tool)} className={`group h-[340px] rounded-[3.5rem] border p-12 flex flex-col justify-between items-start text-left relative overflow-hidden backdrop-blur-md transition-all ${tool.status === 'ready' ? 'bg-white/5 border-white/10 hover:border-cyan-500/50 shadow-2xl hover:shadow-cyan-500/10' : 'bg-black/20 border-white/5 opacity-60 cursor-not-allowed'}`}>
-                          {tool.status === 'soon' && (
-                            <div className="absolute top-8 right-8 overflow-hidden rounded-full bg-zinc-900 border border-white/10 px-3 py-1">
-                              <span className="relative z-10 text-[10px] font-black uppercase tracking-widest text-zinc-500">Soon</span>
-                              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
-                            </div>
-                          )}
-                          <div className={`w-16 h-16 rounded-3xl flex items-center justify-center border transition-all duration-500 ${tool.status === 'ready' ? 'bg-white/5 border-white/10 group-hover:bg-white group-hover:text-black' : 'bg-zinc-900 border-white/5'}`}><tool.icon className="w-7 h-7" /></div>
-                          <div>
-                            <h3 className={`text-2xl font-black tracking-tight mb-3 transition-colors ${tool.status === 'ready' ? 'group-hover:text-cyan-400' : 'text-zinc-600'}`}>{tool.name}</h3>
-                            <p className="text-sm text-zinc-500 font-medium leading-relaxed line-clamp-2">{tool.description}</p>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div key="workspace" initial={{ opacity:0,scale:0.98 }} animate={{ opacity:1,scale:1 }} exit={{ opacity:0 }} transition={{ duration:0.28 }} style={{ padding:'38px 40px', maxWidth:920, margin:'0 auto' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28 }}>
+                <button onClick={()=>{ setSelectedTool(null); setProcessor(null); }}
+                  style={{ display:'flex', alignItems:'center', gap:7, fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,255,255,0.18)', background:'none', border:'none', cursor:'pointer', transition:'color 0.18s' }}
+                  onMouseEnter={e=>(e.currentTarget.style.color='white')}
+                  onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.18)')}
+                ><ArrowLeft style={{ width:14, height:14 }}/> Back</button>
+                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 18px', borderRadius:999, background:'rgba(255,68,0,0.08)', border:'1px solid rgba(255,68,0,0.22)', fontSize:10, fontFamily:'DM Mono,monospace', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.28em', color:'#FF4400' }}>
+                  <Sparkles style={{ width:13, height:13 }}/>{selectedTool.name}
+                </div>
+              </div>
+              <div style={{ background:'#0b0b0b', border:'1px solid rgba(255,255,255,0.05)', borderRadius:26, overflow:'hidden', boxShadow:'0 24px 80px rgba(0,0,0,0.6)' }}>
+                {isLoading ? (
+                  <div style={{ height:600, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
+                    <div style={{ width:36, height:36, border:'2px solid #FF4400', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
+                    <p style={{ fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,255,255,0.18)' }}>Loading processor...</p>
+                  </div>
+                ) : processor ? (
+                  <UniversalWorkspace key={selectedTool.id} tool={selectedTool}
+                    onProcess={async (file:File,opts:any)=>{
+                      if(typeof processor.process==='function') return await processor.process(file,opts);
+                      if(typeof processor==='function') return await processor(file,opts);
+                      throw new Error('Invalid processor');
+                    }}
+                  />
                 ) : (
-                  <motion.div key="workspace" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} transition={{ duration: 0.4 }} className="max-w-5xl mx-auto">
-                    <div className="flex items-center justify-between mb-12">
-                      <button onClick={() => { setSelectedTool(null); setProcessor(null); }} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /> Back to Suite</button>
-                      <div className="flex items-center gap-3 px-6 py-2 bg-white text-black rounded-full text-xs font-black tracking-widest shadow-[0_0_30px_rgba(255,255,255,0.2)]"><Sparkles className="w-4 h-4" /> {selectedTool.name}</div>
-                    </div>
-
-                    <div className="bg-black border border-white/10 rounded-[4rem] overflow-hidden shadow-2xl relative">
-                      {isLoadingProcessor ? (
-                        <div className="h-[600px] flex items-center justify-center">
-                          <div className="text-center space-y-4">
-                            <div className="w-12 h-12 mx-auto border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-xs font-black uppercase tracking-wider text-zinc-500">Loading Processor...</p>
-                          </div>
-                        </div>
-                      ) : processor ? (
-                        <UniversalWorkspace
-                          key={selectedTool.id}
-                          tool={selectedTool}
-                          onProcess={async (file: File, opts: any) => {
-                            try {
-                              if (typeof processor.process === 'function') { return await processor.process(file, opts); }
-                              else if (typeof processor === 'function') { return await processor(file, opts); }
-                              else { throw new Error("Invalid processor structure"); }
-                            } catch (error) { console.error('Processing error:', error); throw error; }
-                          }}
-                        />
-                      ) : (
-                        <div className="h-[600px] flex items-center justify-center">
-                          <div className="text-center space-y-4">
-                            <p className="text-xs font-black uppercase tracking-wider text-red-500">Processor not available</p>
-                            <p className="text-xs text-zinc-600">Please check console for errors</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+                  <div style={{ height:600, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <p style={{ fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,80,80,0.45)' }}>Processor not available</p>
+                  </div>
                 )}
-              </AnimatePresence>
-            </main>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
-        @keyframes shine { to { transform: translateX(200%); } }
-        .animate-shine { animation: shine 2s infinite; }
-      `}</style>
-    </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+    </motion.div>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+export default function MediaMosh() {
+  const [view,         setView]         = useState<'landing'|'dashboard'>('landing');
+  const [activeTab,    setActiveTab]    = useState<MediaType>('image');
+  const [selectedTool, setSelectedTool] = useState<ToolMetadata|null>(null);
+  const [processor,    setProcessor]    = useState<any>(null);
+  const [searchQuery,  setSearchQuery]  = useState('');
+  const [isLoading,    setIsLoading]    = useState(false);
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html:`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;700;900&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        body{background:#080808;overflow:hidden;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .grain-overlay{
+          background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-size:180px 180px;mix-blend-mode:overlay;
+        }
+        .cscroll::-webkit-scrollbar{width:3px;}
+        .cscroll::-webkit-scrollbar-track{background:transparent;}
+        .cscroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.07);border-radius:10px;}
+        .cscroll::-webkit-scrollbar-thumb:hover{background:rgba(255,68,0,0.28);}
+      `}}/>
+      <div style={{ minHeight:'100vh', background:'#080808', color:'white', overflow:'hidden', fontFamily:"'DM Sans',sans-serif" }}>
+        <AnimatePresence mode="wait">
+          {view==='landing' ? (
+            <Landing key="landing" onEnter={(tab)=>{ setActiveTab(tab); setView('dashboard'); }}/>
+          ) : (
+            <Dashboard key="dashboard"
+              activeTab={activeTab} setActiveTab={setActiveTab}
+              selectedTool={selectedTool} setSelectedTool={setSelectedTool}
+              processor={processor} setProcessor={setProcessor}
+              searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+              isLoading={isLoading} setIsLoading={setIsLoading}
+              onHome={()=>{ setView('landing'); setSelectedTool(null); setProcessor(null); }}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }
