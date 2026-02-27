@@ -188,23 +188,14 @@ const TranscriptItem = ({
 // SUB-COMPONENT: PDF SINGLE PAGE CANVAS
 // ---------------------------------------------------------------------------
 
-// Shared pdfjs loader — uses the existing pdfjsLoader.ts pattern which loads
-// from /public/pdfjs/ via webpackIgnore to completely bypass Next.js webpack.
 let _pdfjsPromise: Promise<any> | null = null;
 const getPdfjsLib = (): Promise<any> => {
   if (_pdfjsPromise) return _pdfjsPromise;
 
   _pdfjsPromise = (async () => {
-    // Return cached global if already loaded
     if (typeof window !== 'undefined' && (window as any).pdfjsLib) {
       return (window as any).pdfjsLib;
     }
-
-    // Load from /public/pdfjs/ — webpackIgnore bypasses webpack ESM handling
-    // which causes the "Object.defineProperty on non-object" crash.
-    // Make sure these files exist in /public/pdfjs/:
-    //   pdf.mjs        ← node_modules/pdfjs-dist/build/pdf.mjs
-    //   pdf.worker.mjs ← node_modules/pdfjs-dist/build/pdf.worker.mjs
     const pdfjsModule = await import(/* webpackIgnore: true */ '/pdfjs/pdf.mjs' as any);
     const lib = pdfjsModule.default || pdfjsModule;
 
@@ -225,14 +216,13 @@ const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceU
   const [pdfPage, setPdfPage] = useState<any>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
 
-  // STEP 1: Fetch the document and extract the page
   useEffect(() => {
     let cancelled = false;
     setPdfPage(null);
     setRenderError(null);
 
     const fetchPage = async () => {
-      if (sourceUrl) return; // Image pages handled in render step
+      if (sourceUrl) return; 
       if (!fileObject && !srcFile) return;
 
       try {
@@ -240,7 +230,6 @@ const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceU
 
         let dataToLoad: any;
         if (fileObject) {
-          // Read directly from File — most reliable, avoids blob URL issues
           const arrayBuffer = await fileObject.arrayBuffer();
           dataToLoad = { data: new Uint8Array(arrayBuffer) };
         } else {
@@ -265,7 +254,6 @@ const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceU
     return () => { cancelled = true; };
   }, [srcFile, fileObject, sourceUrl, pageIndex]);
 
-  // STEP 2: Render the page onto the canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -407,13 +395,10 @@ const PdfCanvasViewer = ({
     const loadPdf = async () => {
       try {
         const pdfjsLib = await getPdfjsLib();
-
         if (cancelled) return;
 
         const loadingTask = pdfjsLib.getDocument({ url: src });
-
         const pdf = await loadingTask.promise;
-
         if (cancelled) return;
 
         const pagePromises = [];
@@ -549,7 +534,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   // ── PDF Page Manager States ──────────────────────────────────────────────
   interface PdfManagerPage {
     id: string;
-    sourceId: string;     // 'main', 'blank', 'image', or 'doc-...'
+    sourceId: string;
     sourceType: 'main' | 'blank' | 'image' | 'doc';
     sourceLabel: string;
     originalIndex: number;
@@ -563,8 +548,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const insertDocInputRef = useRef<HTMLInputElement>(null);
   const insertImageInputRef = useRef<HTMLInputElement>(null);
   const [insertIndexTarget, setInsertIndexTarget] = useState<number | null>(null);
-
-
 
   // ── Remove-BG states ─────────────────────────────────────────────────────
   const [selectedBgColor, setSelectedBgColor] = useState<string | null>(null);
@@ -584,7 +567,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const isPdfRemovePage = tool.id === 'pdf-remove-page';
   const isPdfCompress = tool.id === 'pdf-compress';
   const isPdfConverter = tool.id === 'pdf-converter';
-  const isPdfManager = tool.id === 'pdf-page-manager'; // <--- NEW FLAG
+  const isPdfManager = tool.id === 'pdf-page-manager';
   const isPdfTool = isPdfMultiInput || isPdfRemovePage || isPdfCompress || isPdfConverter || isPdfManager;
   const isVideoBgRemover = tool.id === 'video-bg-remover';
   const isRemoveBg = (tool.id === 'remove-bg' || tool.id === 'bg-remover' || tool.id === 'background-remover' || (_toolName.includes('background') && (_toolName.includes('remov')))) && !isVideoBgRemover;
@@ -598,6 +581,65 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const isTTS = tool.id === 'text-to-speech';
   const isSubtitles = tool.id === 'auto-subtitle';
   const isFrameExtractor = tool.id === 'frame-extractor';
+
+  // ── Global Drag & Drop / Paste overrides ────────────────────────────────
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    
+    // Prevent browser from opening files dragged outside the dropzone
+    window.addEventListener('dragover', preventDefaults);
+    window.addEventListener('drop', preventDefaults);
+
+    return () => {
+      window.removeEventListener('dragover', preventDefaults);
+      window.removeEventListener('drop', preventDefaults);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      // Ignore if typing in text inputs (e.g. prompt bar, url bar)
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      
+      if (e.clipboardData && e.clipboardData.files.length > 0) {
+        e.preventDefault();
+        const pastedFiles = Array.from(e.clipboardData.files);
+        const shouldAppend = isPdfMultiInput && files.length > 0;
+        handleFileSelect(pastedFiles, shouldAppend);
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files, file, isPdfMultiInput]);
+
+  // ── Local Dropzone Handlers ──────────────────────────────────────────────
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files, isPdfMultiInput && files.length > 0);
+    }
+  };
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   const formatBytes = (bytes: number) => {
@@ -615,7 +657,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
       e.preventDefault();
 
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        // Navigate: select prev/next page to preview it
         setPdfManagerPages(prev => {
           const idx = prev.findIndex(p => p.id === pdfManagerActiveId);
           if (idx === -1) return prev;
@@ -625,7 +666,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
           return prev;
         });
       } else {
-        // Reorder: move selected page up/down
         setPdfManagerPages(prev => {
           const idx = prev.findIndex(p => p.id === pdfManagerActiveId);
           if (idx === -1) return prev;
@@ -675,7 +715,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     setImageUrlInput('');
     setUrlError(null);
     
-    // PDF Manager resets
     setPdfManagerPages([]);
     setPdfManagerActiveId(null);
     setPdfManagerUnsaved(false);
@@ -737,7 +776,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
         img.src = URL.createObjectURL(newFiles[0]);
       }
 
-      // Initialize PDF Page Manager Tree
       if (isPdfManager && newFiles[0].type === 'application/pdf') {
         setPdfDetecting(true);
         try {
@@ -1041,7 +1079,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     setProgress(0);
     setError(null);
 
-    // ── CLIENT-SIDE IMAGE TO PDF (pdf-lib) ───────────────────────────────
     if (tool.id === 'pdf-from-images' && files && files.length > 0) {
       try {
         setProgress(10);
@@ -1124,7 +1161,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
       return;
     }
 
-    // ── CLIENT-SIDE PDF PAGE REMOVAL (pdf-lib) ───────────────────────────────
     if (isPdfRemovePage && primaryFile && pagesToRemove && pagesToRemove.length > 0) {
       try {
         setProgress(10);
@@ -1167,7 +1203,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
       return;
     }
 
-    // ── CLIENT-SIDE PDF MERGE (pdf-lib) ───────────────────────────────
     if (tool.id === 'pdf-merger' && files && files.length > 0) {
       try {
         setProgress(10);
@@ -1319,7 +1354,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
 
   const handlePdfGridClick = (pageNum: number) => {
     setCurrentPdfPage(pageNum);
-    // Navigate the iframe to this page
     if (pdfIframeRef.current) {
       const currentSrc = pdfIframeRef.current.src || '';
       const base = currentSrc.split('#')[0];
@@ -1363,14 +1397,12 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     { id: 'cave', label: 'Cave', icon: Mountain, color: 'text-purple-400' },
   ];
 
-  // For PDF tools, keeping parameters strictly open ensures input files, options, etc., aren't lost while processing.
   const showParams = !hasInitiated || isSplitter || isVoiceChanger || isTTS || isSubtitles || isPdfTool || isVideoBgRemover || isPdfManager;
 
   const activeSubtitle = isVideoStarted
     ? subtitles.find(s => currentTime >= s.start && currentTime <= s.end)
     : null;
 
-  // Evaluate if the current display state requires rendering a PDF viewer
   const isResultPdf = resultUrl && isPdfTool && !isPdfConverter && !isPdfManager;
   const isSourcePdf = !resultUrl && (file?.type === 'application/pdf' || (isPdfMultiInput && activeFile?.type === 'application/pdf')) && !isPdfManager;
   const displayAsPdf = isResultPdf || isSourcePdf;
@@ -1456,7 +1488,6 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                             <Reorder.Group axis="y" values={pdfManagerPages} onReorder={(newOrder) => { setPdfManagerPages(newOrder); setPdfManagerUnsaved(true); }} className="space-y-0 relative">
                                {pdfManagerPages.map((p, idx) => {
                                   const isFirstOfGroup = idx === 0 || pdfManagerPages[idx - 1].sourceId !== p.sourceId;
-                                  const isLastOfGroup = idx === pdfManagerPages.length - 1 || pdfManagerPages[idx + 1].sourceId !== p.sourceId;
                                   
                                   return (
                                     <React.Fragment key={p.id}>
@@ -2061,9 +2092,21 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                   {isSplitter && (
                     <div className="space-y-6">
                       {!file && (
-                        <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-[4/1] border border-white/5 rounded-3xl bg-white/[0.01] flex flex-col items-center justify-center gap-3 cursor-pointer group transition-all hover:bg-white/5">
+                        <div 
+                          onClick={() => fileInputRef.current?.click()} 
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                          className={`w-full aspect-[4/1] border rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer group transition-all ${
+                            isDragging 
+                              ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]' 
+                              : 'border-white/5 bg-white/[0.01] hover:bg-white/5'
+                          }`}
+                        >
                           <Upload className="w-5 h-5 text-zinc-500 group-hover:text-cyan-400 transition-colors" />
-                          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 group-hover:text-cyan-400 transition-colors">Select Audio File</p>
+                          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 group-hover:text-cyan-400 transition-colors">
+                            {isDragging ? 'Drop Audio Here' : 'Select Audio File'}
+                          </p>
                           <input ref={fileInputRef} type="file" accept="audio/*" onChange={(e) => e.target.files && handleFileSelect(e.target.files)} className="hidden" />
                         </div>
                       )}
@@ -2270,18 +2313,25 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                   {/* MAIN DROPZONE */}
                   <motion.div
                     onClick={() => fileInputRef.current?.click()}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                     whileHover={{ scale: 1.01, borderColor: 'rgba(6,182,212,0.4)', backgroundColor: 'rgba(255,255,255,0.02)' }}
-                    className="w-full py-16 border border-white/5 rounded-[2.5rem] bg-white/[0.01] flex flex-col items-center justify-center gap-5 cursor-pointer group transition-all duration-500 shadow-2xl relative overflow-hidden"
+                    className={`w-full py-16 border rounded-[2.5rem] flex flex-col items-center justify-center gap-5 cursor-pointer group transition-all duration-500 shadow-2xl relative overflow-hidden ${
+                      isDragging 
+                        ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]' 
+                        : 'border-white/5 bg-white/[0.01]'
+                    }`}
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 pointer-events-none">
                       {isPdfMultiInput ? <Layers className="w-8 h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" /> : <Upload className="w-8 h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" />}
                     </div>
-                    <div className="text-center space-y-1.5">
+                    <div className="text-center space-y-1.5 pointer-events-none">
                       <p className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400 group-hover:text-cyan-400 transition-colors">
-                        Import {isPdfMultiInput ? 'Multiple Files' : 'Source Media'}
+                        {isDragging ? 'Drop Media Here' : `Import ${isPdfMultiInput ? 'Multiple Files' : 'Source Media'}`}
                       </p>
                       <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
-                        Drag & Drop or Click to Browse
+                        {isDragging ? 'Release to upload' : 'Drag & Drop, Paste (Ctrl+V) or Click to Browse'}
                       </p>
                     </div>
                     <input ref={fileInputRef} type="file" multiple={isPdfMultiInput ? true : undefined} accept={getFileInputAccept()} className="hidden" onChange={(e) => e.target.files && handleFileSelect(e.target.files)} />
