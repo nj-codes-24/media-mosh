@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Image as ImageIcon, Video, Music, ArrowLeft, FileText, Search } from 'lucide-react';
+import { Image as ImageIcon, Video, Music, ArrowLeft, FileText, Search } from 'lucide-react';
 import { toolRegistry, ToolMetadata, MediaType } from '@/lib/toolRegistry';
 import UniversalWorkspace from '@/components/UniversalWorkspace';
 
@@ -117,28 +117,20 @@ function AmbientBg() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CAMERA SVG — realistic modern touch-screen body
-// ViewBox: 800 × 500. Large LCD screen spans the left/center back, safely 
-// stopping before the physical grip controls on the right.
+// CAMERA SVG
 // ═══════════════════════════════════════════════════════════════════════════════
 function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
   const [hov, setHov] = useState<string|null>(null);
 
-  // SVG canvas size
   const VW = 800, VH = 500;
-  // Displayed size (scaled down to fit)
   const DW = 720, DH = 450;
   const scale = DW / VW;
 
-  // Modern widescreen LCD covering the left and center, preserving right-hand controls
   const LCD = { x: 36, y: 94, w: 500, h: 356 };
 
   return (
     <div style={{ position:'relative', width:DW, height:DH }}>
-      {/* Drop shadow wrapper */}
       <div style={{ position:'absolute', inset:0, filter:'drop-shadow(0 28px 60px rgba(0,0,0,0.95)) drop-shadow(0 0 50px rgba(255,68,0,0.07))' }}>
-
-        {/* ═══ SVG CAMERA BODY ═══ */}
         <svg width={DW} height={DH} viewBox={`0 0 ${VW} ${VH}`} style={{ display:'block' }}>
           <defs>
             <linearGradient id="body" x1="0%" y1="0%" x2="80%" y2="100%">
@@ -167,65 +159,54 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
             </filter>
           </defs>
 
-          {/* ══ MAIN BODY ══ */}
+          {/* MAIN BODY */}
           <rect x="2" y="72" width="796" height="408" rx="18" fill="url(#body)"/>
-          {/* Top bevel highlight */}
           <rect x="2" y="72" width="796" height="3" rx="2" fill="rgba(255,255,255,0.045)"/>
-          {/* Bottom shadow */}
           <rect x="8" y="462" width="784" height="14" rx="7" fill="rgba(0,0,0,0.6)"/>
 
-          {/* ══ GRIP (right bulge) ══ */}
+          {/* GRIP */}
           <path d="M600,72 Q642,72 668,92 L694,135 L710,480 L600,480 Z" fill="url(#grip)"/>
-          {/* Grip edge highlight */}
           <path d="M602,74 Q638,74 663,94 L689,137 L705,478 L602,478 Z" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
 
-          {/* ══ TOP PLATE ══ */}
+          {/* TOP PLATE */}
           <rect x="2" y="2" width="796" height="72" rx="14" fill="url(#topplate)"/>
           <rect x="2" y="62" width="796" height="12" fill="rgba(0,0,0,0.38)"/>
-          {/* Top plate bevel */}
           <rect x="2" y="2" width="796" height="2.5" rx="1.5" fill="rgba(255,255,255,0.08)"/>
 
-          {/* ══ VIEWFINDER HUMP ══ */}
+          {/* VIEWFINDER HUMP */}
           <rect x="170" y="0" width="148" height="32" rx="8" fill="#1c1a17"/>
           <rect x="180" y="2" width="128" height="24" rx="5" fill="#111009" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
           <rect x="188" y="5" width="112" height="16" rx="4" fill="rgba(16,24,44,0.95)" stroke="rgba(255,68,0,0.16)" strokeWidth="0.8"/>
-          {/* VF frame guides */}
           <rect x="194" y="7" width="28" height="3" rx="1" fill="rgba(255,255,255,0.05)"/>
           <rect x="266" y="7" width="28" height="3" rx="1" fill="rgba(255,255,255,0.05)"/>
 
-          {/* Hot shoe */}
           <rect x="218" y="0" width="68" height="6" rx="1.5" fill="#2a2720" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5"/>
           {[226,234,242,250,258,266,274,282].map((x,i)=>(
             <line key={i} x1={x} y1="0" x2={x} y2="6" stroke="rgba(0,0,0,0.5)" strokeWidth="1.5"/>
           ))}
 
-          {/* ══ MODE DIAL (top-left) ══ */}
+          {/* MODE DIAL */}
           <circle cx="96" cy="38" r="34" fill="url(#dial-grad)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.4"/>
           <circle cx="96" cy="38" r="28" fill="none" stroke="rgba(255,255,255,0.045)" strokeWidth="0.8"/>
-          {/* Dial knurling */}
           {Array.from({length:20}).map((_,i)=>{
             const a=(i/20)*Math.PI*2-Math.PI/2;
             return <line key={i} x1={96+26*Math.cos(a)} y1={38+26*Math.sin(a)} x2={96+33*Math.cos(a)} y2={38+33*Math.sin(a)} stroke="rgba(255,255,255,0.1)" strokeWidth="1.3"/>;
           })}
-          {/* Dial center */}
           <circle cx="96" cy="38" r="18" fill="#131110" stroke="rgba(255,68,0,0.3)" strokeWidth="1"/>
           <text x="96" y="44" textAnchor="middle" fill="rgba(255,68,0,0.95)" fontSize="13" fontFamily="DM Mono,monospace" fontWeight="700">M</text>
-          {/* Dial labels */}
           {[['A',-78],['S',-48],['P',-16],['C1',18],['C2',50],['AUTO',82]].map(([lbl,deg],i)=>{
             const a=(Number(deg)-90)*Math.PI/180;
             return <text key={i} x={96+42*Math.cos(a)} y={38+42*Math.sin(a)+3} textAnchor="middle" fill="rgba(255,255,255,0.18)" fontSize="6.5" fontFamily="DM Mono,monospace">{lbl as string}</text>;
           })}
-          {/* Dial indicator mark */}
           <line x1="96" y1="6" x2="96" y2="10" stroke="rgba(255,68,0,0.8)" strokeWidth="2" strokeLinecap="round"/>
 
-          {/* ══ SHUTTER BUTTON ══ */}
+          {/* SHUTTER BUTTON */}
           <circle cx="626" cy="34" r="24" fill="#232019" stroke="rgba(255,255,255,0.1)" strokeWidth="1.2"/>
           <circle cx="626" cy="34" r="18" fill="url(#shutter-btn)"/>
           <circle cx="626" cy="34" r="12" fill="rgba(255,50,0,0.72)"/>
-          {/* Shutter glare */}
           <ellipse cx="620" cy="28" rx="6" ry="3.5" fill="rgba(255,255,255,0.24)" transform="rotate(-22 620 28)"/>
 
-          {/* ══ EXPOSURE DIAL (next to shutter) ══ */}
+          {/* EXPOSURE DIAL */}
           <circle cx="680" cy="38" r="20" fill="#1c1b17" stroke="rgba(255,255,255,0.09)" strokeWidth="1"/>
           {Array.from({length:14}).map((_,i)=>{
             const a=(i/14)*Math.PI*2;
@@ -233,7 +214,7 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
           })}
           <circle cx="680" cy="38" r="9" fill="#131211" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
 
-          {/* ══ TOP-RIGHT BUTTONS ══ */}
+          {/* TOP-RIGHT BUTTONS */}
           {[[574,22,10],[544,20,9],[516,20,9]].map(([cx,cy,r],i)=>(
             <g key={i}>
               <circle cx={cx} cy={cy} r={r} fill="#1e1c18" stroke="rgba(255,255,255,0.1)" strokeWidth="0.9"/>
@@ -243,18 +224,16 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
           <text x="544" y="24" textAnchor="middle" fill="rgba(255,255,255,0.18)" fontSize="6.5" fontFamily="DM Mono,monospace">MENU</text>
           <text x="516" y="24" textAnchor="middle" fill="rgba(255,255,255,0.15)" fontSize="6.5" fontFamily="DM Mono,monospace">INFO</text>
 
-          {/* ══ TOP LCD PANEL ══ */}
+          {/* TOP LCD PANEL */}
           <rect x="420" y="10" width="112" height="50" rx="5" fill="#070707" stroke="rgba(255,68,0,0.24)" strokeWidth="0.9"/>
           <rect x="424" y="14" width="104" height="42" rx="3" fill="rgba(255,68,0,0.02)"/>
           <text x="476" y="32" textAnchor="middle" fill="rgba(255,68,0,0.72)" fontSize="12" fontFamily="DM Mono,monospace" letterSpacing="1">1/250</text>
           <text x="428" y="48" fill="rgba(255,255,255,0.28)" fontSize="8.5" fontFamily="DM Mono,monospace">f/2.8</text>
           <text x="478" y="48" fill="rgba(255,255,255,0.22)" fontSize="8.5" fontFamily="DM Mono,monospace">ISO800</text>
 
-          {/* ══ RIGHT BODY PHYSICAL CONTROLS ══ */}
           {/* D-pad ring */}
           <circle cx="686" cy="330" r="36" fill="#0d0d0d" stroke="rgba(255,255,255,0.09)" strokeWidth="1.2"/>
           <circle cx="686" cy="330" r="15" fill="#0b0a09" stroke="rgba(255,68,0,0.22)" strokeWidth="1"/>
-          {/* D-pad arms */}
           {[['▲',686,302],['▼',686,358],['◀',658,330],['▶',714,330]].map(([s,x,y])=>(
             <text key={s as string} x={x as number} y={(y as number)+3.5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="11" fontFamily="sans-serif">{s as string}</text>
           ))}
@@ -279,35 +258,29 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
           <text x="618" y="378" textAnchor="middle" fill="rgba(255,255,255,0.13)" fontSize="6" fontFamily="DM Mono,monospace">AF-L</text>
           <text x="652" y="384" textAnchor="middle" fill="rgba(255,68,0,0.38)" fontSize="7" fontFamily="DM Mono,monospace">AF</text>
 
-          {/* ══ LARGE LEFT/CENTER LCD SCREEN BEZEL ══ */}
-          {/* Outer bezel/frame */}
+          {/* LARGE LEFT/CENTER LCD SCREEN BEZEL */}
           <rect x={LCD.x-4} y={LCD.y-4} width={LCD.w+8} height={LCD.h+8} rx="10" fill="#0c0a08" stroke="rgba(255,68,0,0.38)" strokeWidth="1.8"/>
-          {/* Screen dark background */}
           <rect x={LCD.x} y={LCD.y} width={LCD.w} height={LCD.h} rx="7" fill="url(#lcd-screen)"/>
-          {/* Screen outer glow */}
           <rect x={LCD.x-4} y={LCD.y-4} width={LCD.w+8} height={LCD.h+8} rx="10" fill="none" stroke="rgba(255,68,0,0.1)" strokeWidth="10" filter="url(#lcd-glow)"/>
-          {/* Top glare */}
           <rect x={LCD.x+2} y={LCD.y+2} width={LCD.w-4} height={LCD.h*0.3} rx="6" fill="rgba(255,255,255,0.022)"/>
 
-          {/* ══ SD / PORT DOOR (right edge) ══ */}
+          {/* SD / PORT DOOR */}
           <rect x="774" y="200" width="22" height="88" rx="7" fill="#161412" stroke="rgba(255,255,255,0.07)" strokeWidth="0.9"/>
           <line x1="785" y1="214" x2="785" y2="278" stroke="rgba(255,255,255,0.04)" strokeWidth="0.9" strokeDasharray="4 8"/>
           <text x="784" y="218" textAnchor="middle" fill="rgba(255,255,255,0.08)" fontSize="6.5" fontFamily="DM Mono,monospace" transform="rotate(90 784 218)">SD</text>
 
-          {/* ══ BOTTOM PLATE ══ */}
+          {/* BOTTOM PLATE */}
           <rect x="2" y="474" width="796" height="24" rx="10" fill="#0d0c0b" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5"/>
           <text x="28" y="489" fill="rgba(255,255,255,0.05)" fontSize="7" fontFamily="DM Mono,monospace" letterSpacing="1.5">SN: MM-X1-2025  MADE FOR CREATORS</text>
-          {/* Tripod mount */}
           <circle cx="330" cy="486" r="8.5" fill="#090808" stroke="rgba(255,255,255,0.1)" strokeWidth="0.9"/>
           <line x1="323" y1="486" x2="337" y2="486" stroke="rgba(255,255,255,0.14)" strokeWidth="0.9"/>
           <line x1="330" y1="479" x2="330" y2="493" stroke="rgba(255,255,255,0.14)" strokeWidth="0.9"/>
-          {/* Battery door */}
           <rect x="380" y="476" width="52" height="18" rx="4" fill="#0b0a09" stroke="rgba(255,255,255,0.08)" strokeWidth="0.7"/>
           <text x="406" y="488" textAnchor="middle" fill="rgba(255,255,255,0.07)" fontSize="6" fontFamily="DM Mono,monospace">BATT</text>
         </svg>
       </div>
 
-      {/* ═══ HTML LCD OVERLAY ═══ */}
+      {/* HTML LCD OVERLAY */}
       <div style={{
         position: 'absolute',
         left:  Math.round(LCD.x * scale),
@@ -318,13 +291,10 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
         overflow: 'hidden',
         background: 'radial-gradient(ellipse at 40% 30%, #0e0c09 0%, #040302 100%)',
       }}>
-        {/* Scanlines */}
         <div style={{ position:'absolute', inset:0, backgroundImage:'repeating-linear-gradient(0deg,rgba(0,0,0,0.065) 0px,rgba(0,0,0,0.065) 1px,transparent 1px,transparent 4px)', pointerEvents:'none', zIndex:10 }}/>
-        {/* Glare */}
         <div style={{ position:'absolute', top:0, left:0, right:0, height:'30%', background:'linear-gradient(180deg,rgba(255,255,255,0.03) 0%,transparent 100%)', pointerEvents:'none', zIndex:11 }}/>
 
         <div style={{ position:'relative', zIndex:20, display:'flex', flexDirection:'column', height:'100%', padding:'20px 24px' }}>
-          {/* Status bar */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12, flexShrink:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:6 }}>
               <motion.span animate={{ opacity:[1,0.15,1] }} transition={{ duration:1.5, repeat:Infinity }}
@@ -334,7 +304,6 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
             <span style={{ fontSize:6, fontFamily:'DM Mono,monospace', color:'rgba(255,255,255,0.12)', letterSpacing:'0.22em' }}>MM-STUDIO</span>
           </div>
 
-          {/* 2x2 Grid for options */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:16, flex:1, margin:'2px 0' }}>
             {CATS.map((cat, i) => (
               <motion.button
@@ -360,9 +329,12 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
                   position: 'relative', overflow:'hidden',
                 }}
               >
+                {/* Continuous glassy shimmer effect to signify clickability */}
+                <div className="shimmer-container" style={{ animationDelay: `${i * 0.15}s` }} />
+                
                 {hov===cat.type && <div style={{ position:'absolute', inset:0, background:'linear-gradient(135deg,rgba(255,68,0,0.08) 0%,transparent 55%)', pointerEvents:'none' }}/>}
-                <cat.icon style={{ width:18, height:18, color:hov===cat.type?'#FF4400':'rgba(255,255,255,0.42)', transition:'color 0.2s ease', flexShrink:0, marginBottom:2 }}/>
-                <div>
+                <cat.icon style={{ width:18, height:18, color:hov===cat.type?'#FF4400':'rgba(255,255,255,0.42)', transition:'color 0.2s ease', flexShrink:0, marginBottom:2, position:'relative', zIndex:2 }}/>
+                <div style={{ position:'relative', zIndex:2 }}>
                   <div style={{ fontSize:15, fontFamily:'Bebas Neue,sans-serif', letterSpacing:'0.14em', color:hov===cat.type?'#FF4400':'rgba(255,255,255,0.88)', lineHeight:1, transition:'color 0.2s ease' }}>
                     {cat.label}
                   </div>
@@ -374,7 +346,6 @@ function Camera({ onSelect }: { onSelect: (t: MediaType) => void }) {
             ))}
           </div>
 
-          {/* Footer */}
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:14, paddingTop:12, borderTop:'1px solid rgba(255,255,255,0.05)', flexShrink:0 }}>
             <span style={{ fontSize:5.5, fontFamily:'DM Mono,monospace', color:'rgba(255,255,255,0.09)', letterSpacing:'0.18em' }}>30+ TOOLS READY</span>
             <div style={{ display:'flex', gap:4, alignItems:'center' }}>
@@ -398,21 +369,12 @@ function Landing({ onEnter }: { onEnter: (t: MediaType) => void }) {
     >
       <AmbientBg/>
 
-      {/* NAV */}
+      {/* Top Nav completely empty for ultra-clean landing page */}
       <motion.nav initial={{ opacity:0, y:-14 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1, duration:0.5 }}
-        style={{ position:'relative', zIndex:60, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'20px 44px', flexShrink:0 }}
-      >
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ width:9, height:9, borderRadius:'50%', background:'#FF4400', boxShadow:'0 0 12px #FF4400', display:'inline-block' }}/>
-          <span style={{ fontSize:12, fontFamily:'DM Mono,monospace', fontWeight:700, letterSpacing:'0.3em', textTransform:'uppercase', color:'rgba(255,255,255,0.5)' }}>Media Mosh</span>
-        </div>
-        {/* Nav items removed as requested to keep it super clean */}
-      </motion.nav>
+        style={{ position:'relative', zIndex:60, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'20px 44px', flexShrink:0, minHeight: 80 }}
+      />
 
-      {/* HERO */}
       <div style={{ flex:1, display:'flex', alignItems:'center', position:'relative', zIndex:20, minHeight:0, padding:'0 44px', overflow:'hidden' }}>
-
-        {/* LEFT — Title */}
         <div style={{ width:'38%', flexShrink:0 }}>
           <motion.div initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.18, duration:0.5 }}
             style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}
@@ -432,7 +394,6 @@ function Landing({ onEnter }: { onEnter: (t: MediaType) => void }) {
           </div>
         </div>
 
-        {/* RIGHT — Camera */}
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', minWidth:0, position:'relative' }}>
           <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:720, height:500, background:'radial-gradient(ellipse,rgba(255,68,0,0.065) 0%,transparent 68%)', filter:'blur(55px)', borderRadius:'50%', pointerEvents:'none' }}/>
           <motion.div animate={{ y:[0,-9,0] }} transition={{ duration:5, repeat:Infinity, ease:'easeInOut' }}>
@@ -441,11 +402,32 @@ function Landing({ onEnter }: { onEnter: (t: MediaType) => void }) {
         </div>
       </div>
 
-      {/* MARQUEE */}
       <div style={{ position:'relative', zIndex:20, borderTop:'1px solid rgba(255,255,255,0.05)', padding:'11px 0', flexShrink:0 }}>
         <Marquee/>
       </div>
     </motion.div>
+  );
+}
+
+// ─── Corner Reticle (Uses standard absolute HTML divs to guarantee perfect sizing) ───
+function CornerMarks({ color = 'rgba(255,255,255,0.15)', size = 10, thickness = 1.5 }: { color?: string; size?: number; thickness?: number }) {
+  const t = thickness; 
+  const l = size;  
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+      {/* Top Left */}
+      <div style={{ position:'absolute', top:0, left:0, width:l, height:t, background:color }} />
+      <div style={{ position:'absolute', top:0, left:0, width:t, height:l, background:color }} />
+      {/* Top Right */}
+      <div style={{ position:'absolute', top:0, right:0, width:l, height:t, background:color }} />
+      <div style={{ position:'absolute', top:0, right:0, width:t, height:l, background:color }} />
+      {/* Bottom Left */}
+      <div style={{ position:'absolute', bottom:0, left:0, width:l, height:t, background:color }} />
+      <div style={{ position:'absolute', bottom:0, left:0, width:t, height:l, background:color }} />
+      {/* Bottom Right */}
+      <div style={{ position:'absolute', bottom:0, right:0, width:l, height:t, background:color }} />
+      <div style={{ position:'absolute', bottom:0, right:0, width:t, height:l, background:color }} />
+    </div>
   );
 }
 
@@ -459,6 +441,7 @@ function Dashboard({ activeTab, setActiveTab, selectedTool, setSelectedTool, pro
   onHome: () => void;
 }) {
   const tools = toolRegistry.filter(t=>t.category===activeTab).filter(t=>t.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const sortedTools = [...tools.filter(t=>t.status==='ready'), ...tools.filter(t=>t.status==='soon')];
 
   const handleToolSelect = async (tool: ToolMetadata) => {
     setSelectedTool(tool); setIsLoading(true);
@@ -475,118 +458,339 @@ function Dashboard({ activeTab, setActiveTab, selectedTool, setSelectedTool, pro
 
   return (
     <motion.div key="dashboard"
-      initial={{ opacity:0, scale:0.9, filter:'blur(16px)' }}
-      animate={{ opacity:1, scale:1, filter:'blur(0px)', transition:{ duration:0.6, ease:[0.22,1,0.36,1] } }}
-      exit={{ opacity:0, transition:{ duration:0.3 } }}
-      style={{ display:'flex', height:'100vh', background:'#080808' }}
+      initial={{ opacity:0, scale:0.97, filter:'blur(14px)' }}
+      animate={{ opacity:1, scale:1, filter:'blur(0px)', transition:{ duration:0.55, ease:[0.22,1,0.36,1] } }}
+      exit={{ opacity:0, transition:{ duration:0.25 } }}
+      style={{ display:'flex', height:'100vh', background:'#070707' }}
     >
-      {/* Sidebar */}
-      <aside style={{ width:248, borderRight:'1px solid rgba(255,255,255,0.05)', background:'#0b0b0b', display:'flex', flexDirection:'column', flexShrink:0 }}>
-        <div style={{ padding:'22px 18px 14px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:18 }}>
-            <span style={{ width:7, height:7, borderRadius:'50%', background:'#FF4400', boxShadow:'0 0 8px #FF4400', display:'inline-block' }}/>
-            <span style={{ fontSize:11, fontFamily:'DM Mono,monospace', fontWeight:700, letterSpacing:'0.3em', textTransform:'uppercase', color:'rgba(255,255,255,0.28)' }}>Media Mosh</span>
-          </div>
-          <button onClick={onHome}
-            style={{ display:'flex', alignItems:'center', gap:7, color:'rgba(255,255,255,0.18)', background:'none', border:'none', cursor:'pointer', marginBottom:16, fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', transition:'color 0.18s' }}
-            onMouseEnter={e=>(e.currentTarget.style.color='white')}
-            onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.18)')}
-          ><ArrowLeft style={{ width:12, height:12 }}/> Home</button>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:4, background:'rgba(255,255,255,0.03)', borderRadius:12, padding:4 }}>
-            {(['image','video','audio','pdf'] as MediaType[]).map(tab=>(
-              <button key={tab} onClick={()=>handleTabChange(tab)}
-                style={{ padding:'6px 0', borderRadius:8, fontSize:8, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.12em', fontWeight:700, background:activeTab===tab?'#FF4400':'none', color:activeTab===tab?'white':'rgba(255,255,255,0.18)', border:'none', cursor:'pointer', transition:'all 0.2s' }}
-              >{tab}</button>
-            ))}
-          </div>
+
+      {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
+      <aside style={{
+        width: 228,
+        borderRight: '1px solid rgba(255,255,255,0.07)',
+        background: 'linear-gradient(180deg,#0e0e0e 0%,#090909 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        flexShrink: 0,
+        position: 'relative',
+      }}>
+        <div style={{ position:'absolute', top:0, right:0, width:1, height:'100%', background:'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%)', pointerEvents:'none' }}/>
+
+        <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+          {/* Viewfinder Logo (Interactive for Home Button) */}
+          <button onClick={onHome} className="logo-btn" style={{ background:'none', border:'none', cursor:'pointer', padding:0, textAlign:'left', outline:'none', display:'block', width:'100%' }}>
+            <div style={{ position: 'relative', padding: '12px 14px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width:'100%' }}>
+              
+              {/* Permanent Orange Viewfinder Corners */}
+              <div className="logo-c" style={{ position:'absolute', top:0, left:0, width:10, height:1.5, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', top:0, left:0, width:1.5, height:10, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', top:0, right:0, width:10, height:1.5, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', top:0, right:0, width:1.5, height:10, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', bottom:0, left:0, width:10, height:1.5, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', bottom:0, left:0, width:1.5, height:10, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', bottom:0, right:0, width:10, height:1.5, background:'#FF4400', transition:'all 0.2s' }} />
+              <div className="logo-c" style={{ position:'absolute', bottom:0, right:0, width:1.5, height:10, background:'#FF4400', transition:'all 0.2s' }} />
+
+              <span className="logo-label" style={{ position:'relative', zIndex:2, fontSize:11, fontFamily:'DM Mono,monospace', fontWeight:700, letterSpacing:'0.36em', textTransform:'uppercase', color:'rgba(255,255,255,0.7)', transition:'color 0.2s' }}>Media Mosh</span>
+            </div>
+          </button>
         </div>
-        <div className="cscroll" style={{ flex:1, overflowY:'auto', padding:'4px 10px 20px', display:'flex', flexDirection:'column', gap:2 }}>
-          {toolRegistry.filter(t=>t.category===activeTab).map(tool=>(
-            <button key={tool.id} disabled={tool.status==='soon'} onClick={()=>tool.status==='ready'&&handleToolSelect(tool)}
-              style={{ width:'100%', textAlign:'left', padding:'10px 13px', borderRadius:11, fontSize:12, fontWeight:500, display:'flex', alignItems:'center', justifyContent:'space-between', background:selectedTool?.id===tool.id?'rgba(255,68,0,0.1)':'none', border:selectedTool?.id===tool.id?'1px solid rgba(255,68,0,0.22)':'1px solid transparent', color:selectedTool?.id===tool.id?'#FF4400':tool.status==='soon'?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.3)', cursor:tool.status==='soon'?'not-allowed':'pointer', transition:'all 0.2s' }}
-              onMouseEnter={e=>{ if(tool.status==='ready'&&selectedTool?.id!==tool.id) e.currentTarget.style.color='rgba(255,255,255,0.65)'; }}
-              onMouseLeave={e=>{ if(tool.status==='ready'&&selectedTool?.id!==tool.id) e.currentTarget.style.color='rgba(255,255,255,0.3)'; }}
-            >
-              {tool.name}
-              {tool.status==='soon'&&<span style={{ fontSize:8, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.2em', opacity:0.3 }}>Soon</span>}
-            </button>
-          ))}
+
+        <div style={{ padding:'18px 20px 8px' }}>
+          <p style={{ fontSize:7.5, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.4em', color:'rgba(255,255,255,0.18)' }}>Tools</p>
+        </div>
+
+        <div className="cscroll" style={{ flex:1, overflowY:'auto', padding:'2px 0 24px', display:'flex', flexDirection:'column', gap:0 }}>
+          {toolRegistry.filter(t=>t.category===activeTab).map(tool => {
+            const active = selectedTool?.id === tool.id;
+            const soon   = tool.status === 'soon';
+            return (
+              <button key={tool.id} disabled={soon} onClick={()=>!soon && handleToolSelect(tool)}
+                style={{
+                  width:'100%', textAlign:'left',
+                  padding:'10px 20px 10px 24px',
+                  fontSize:12.5, fontWeight:500, letterSpacing:'-0.005em',
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  background: 'none',
+                  borderLeft: '2px solid transparent',
+                  borderRight:'none', borderTop:'none', borderBottom:'none',
+                  color: active ? 'rgba(255,255,255,0.92)' : soon ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+                  cursor: soon ? 'default' : 'pointer',
+                  transition:'all 0.15s',
+                  position:'relative',
+                }}
+                onMouseEnter={e=>{ if(!soon && !active){ e.currentTarget.style.color='rgba(255,255,255,0.92)'; e.currentTarget.style.background='rgba(255,255,255,0.04)'; }}}
+                onMouseLeave={e=>{ if(!soon && !active){ e.currentTarget.style.color='rgba(255,255,255,0.6)'; e.currentTarget.style.background='none'; }}}
+              >
+                <span style={{ fontFamily:"'DM Sans',sans-serif" }}>{tool.name}</span>
+                
+                {/* Clean, greyed-out SOON text for the sidebar to remain understated */}
+                {soon && (
+                  <span style={{ 
+                    fontSize: 7.5, fontFamily: "'DM Mono', monospace", 
+                    letterSpacing: '0.2em', color: 'rgba(255, 255, 255, 0.25)' 
+                  }}>SOON</span>
+                )}
+                
+                {active && (
+                  <motion.div
+                    animate={{ opacity: [1, 0.4, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ width:5, height:5, borderRadius:'50%', background:'#FF4400', boxShadow:'0 0 6px rgba(255,68,0,0.5)', flexShrink:0 }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </aside>
 
-      {/* Main */}
-      <main style={{ flex:1, overflowY:'auto', background:'#080808' }}>
-        <AnimatePresence mode="wait">
-          {!selectedTool ? (
-            <motion.div key={`grid-${activeTab}`} initial={{ opacity:0,y:10 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0 }} transition={{ duration:0.25 }} style={{ padding:'38px 40px' }}>
-              <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:36 }}>
-                <div>
-                  <h2 style={{ fontFamily:'Bebas Neue,sans-serif', fontSize:52, textTransform:'uppercase', color:'#FF4400', lineHeight:1, marginBottom:5 }}>{activeTab}</h2>
-                  <p style={{ fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,255,255,0.16)' }}>{tools.length} tools available</p>
-                </div>
-                <div style={{ position:'relative' }}>
-                  <Search style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)', width:14, height:14, color:'rgba(255,255,255,0.15)' }}/>
-                  <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search tools..."
-                    style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'10px 16px 10px 38px', fontSize:13, width:210, outline:'none', color:'rgba(255,255,255,0.52)', fontFamily:"'DM Sans',sans-serif", caretColor:'#FF4400' }}
+      {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
+      <main style={{ flex:1, overflowY:'auto', position:'relative', display:'flex', flexDirection:'column',
+        background:'radial-gradient(ellipse at 60% 0%, rgba(255,68,0,0.055) 0%, transparent 55%), radial-gradient(ellipse at 100% 100%, rgba(255,68,0,0.025) 0%, transparent 45%), #080808',
+      }}>
+        <div className="grain-overlay" style={{ position:'absolute', inset:0, opacity:0.025, pointerEvents:'none', zIndex:0 }}/>
+
+        {/* Top bar */}
+        <div style={{ position:'relative', zIndex:10, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 32px', borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0,
+          background:'rgba(8,8,8,0.7)', backdropFilter:'blur(12px)',
+        }}>
+          <div style={{
+            display:'flex', alignItems:'center', gap:1,
+            background:'rgba(0,0,0,0.55)',
+            border:'1px solid rgba(255,255,255,0.1)',
+            borderRadius:8,
+            padding:'3px',
+            boxShadow:'inset 0 2px 6px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+          }}>
+            {(['image','video','audio','pdf'] as MediaType[]).map(tab => {
+              const active = activeTab === tab;
+              return (
+                <button key={tab} onClick={()=>handleTabChange(tab)}
+                  style={{
+                    padding:'6px 20px', borderRadius:5,
+                    fontSize:9, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.26em', fontWeight:700,
+                    background: active
+                      ? 'linear-gradient(180deg, #FF5500 0%, #CC2200 100%)'
+                      : 'none',
+                    color: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.28)',
+                    border:'none', cursor:'pointer',
+                    boxShadow: active
+                      ? '0 1px 8px rgba(255,68,0,0.5), 0 1px 0 rgba(255,255,255,0.15) inset'
+                      : 'inset 0 1px 3px rgba(0,0,0,0.5)',
+                    transition:'all 0.18s',
+                    position:'relative',
+                  }}
+                  onMouseEnter={e=>{ if(!active) e.currentTarget.style.color='rgba(255,255,255,0.6)'; }}
+                  onMouseLeave={e=>{ if(!active) e.currentTarget.style.color='rgba(255,255,255,0.28)'; }}
+                >
+                  {tab}
+                  {active && (
+                    <span style={{ position:'absolute', bottom:3, left:'50%', transform:'translateX(-50%)', width:4, height:4, borderRadius:'50%', background:'rgba(255,200,180,0.7)', display:'block' }}/>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ position:'relative' }}>
+            <Search style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)', width:12, height:12, color:'rgba(255,255,255,0.2)' }}/>
+            <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search tools…"
+              style={{
+                background:'rgba(255,255,255,0.04)',
+                border:'1px solid rgba(255,255,255,0.09)',
+                borderRadius:6,
+                padding:'8px 14px 8px 32px',
+                fontSize:12.5, width:200, outline:'none',
+                color:'rgba(255,255,255,0.75)',
+                fontFamily:'DM Mono,monospace',
+                letterSpacing:'0.03em',
+                caretColor:'#FF4400',
+                transition:'border-color 0.2s, box-shadow 0.2s',
+                boxShadow:'inset 0 1px 4px rgba(0,0,0,0.4)',
+              }}
+              onFocus={e=>{ e.currentTarget.style.borderColor='rgba(255,68,0,0.45)'; e.currentTarget.style.boxShadow='inset 0 1px 4px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,68,0,0.1)'; }}
+              onBlur={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,0.09)'; e.currentTarget.style.boxShadow='inset 0 1px 4px rgba(0,0,0,0.4)'; }}
+            />
+          </div>
+        </div>
+
+        {/* Page content */}
+        <div style={{ flex:1, overflowY:'auto', position:'relative', zIndex:1 }}>
+          <AnimatePresence mode="wait">
+            {!selectedTool ? (
+              <motion.div key={`grid-${activeTab}`}
+                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
+                transition={{ duration:0.22 }}
+                style={{ padding:'26px 32px 48px' }}
+              >
+                
+                {/* Fresh, New Creative Category Text Style */}
+                <div style={{ marginBottom:36, display:'flex', alignItems:'center' }}>
+                  <motion.div 
+                    initial={{ height: 0 }} 
+                    animate={{ height: 50 }} 
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    style={{ width: 6, background: '#FF4400', borderRadius: 4, boxShadow: '0 0 16px rgba(255,68,0,0.6)', marginRight: 24 }} 
                   />
+                  <h2 style={{
+                    fontFamily:'Bebas Neue,sans-serif',
+                    fontSize: 'clamp(56px, 7vw, 84px)',
+                    textTransform:'uppercase',
+                    lineHeight:1,
+                    letterSpacing:'0.04em',
+                    margin:0,
+                    display: 'flex',
+                    gap: 16,
+                    alignItems: 'center'
+                  }}>
+                    <motion.span 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      transition={{ duration: 0.3 }}
+                      style={{ color: '#FFFFFF', textShadow: '0 4px 24px rgba(0,0,0,0.5)' }}
+                    >{activeTab}</motion.span>
+                    <motion.span 
+                      initial={{ opacity: 0, x: 10 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      transition={{ duration: 0.3, delay: 0.1 }}
+                      style={{ color: 'transparent', WebkitTextStroke: '1.5px rgba(255,255,255,0.15)' }}
+                    >WORKSPACE</motion.span>
+                  </h2>
                 </div>
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-                {tools.map((tool,i)=>(
-                  <motion.button key={tool.id} initial={{ opacity:0,y:12 }} animate={{ opacity:1,y:0 }} transition={{ delay:i*0.03, duration:0.28 }}
-                    whileHover={tool.status==='ready'?{y:-4}:{}}
-                    onClick={()=>tool.status==='ready'&&handleToolSelect(tool)}
-                    style={{ height:186, borderRadius:18, border:'1px solid rgba(255,255,255,0.05)', padding:'20px', display:'flex', flexDirection:'column', justifyContent:'space-between', alignItems:'flex-start', textAlign:'left', background:'rgba(255,255,255,0.018)', cursor:tool.status==='ready'?'pointer':'not-allowed', opacity:tool.status==='soon'?0.3:1, overflow:'hidden', position:'relative', transition:'border-color 0.2s, transform 0.2s' }}
-                    onMouseEnter={e=>{ if(tool.status==='ready') e.currentTarget.style.borderColor='rgba(255,68,0,0.26)'; }}
-                    onMouseLeave={e=>{ e.currentTarget.style.borderColor='rgba(255,255,255,0.05)'; }}
-                  >
-                    {tool.status==='soon'&&<div style={{ position:'absolute', top:13, right:13, padding:'2px 8px', borderRadius:999, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)' }}><span style={{ fontSize:8, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.2em', color:'rgba(255,255,255,0.18)' }}>Soon</span></div>}
-                    <div style={{ width:38, height:38, borderRadius:11, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <tool.icon style={{ width:16, height:16, color:'rgba(255,255,255,0.35)' }}/>
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize:14, fontWeight:700, letterSpacing:'-0.01em', color:'rgba(255,255,255,0.72)', marginBottom:5 }}>{tool.name}</h3>
-                      <p style={{ fontSize:11.5, color:'rgba(255,255,255,0.2)', lineHeight:1.55 }}>{tool.description}</p>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div key="workspace" initial={{ opacity:0,scale:0.98 }} animate={{ opacity:1,scale:1 }} exit={{ opacity:0 }} transition={{ duration:0.28 }} style={{ padding:'38px 40px', maxWidth:920, margin:'0 auto' }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28 }}>
-                <button onClick={()=>{ setSelectedTool(null); setProcessor(null); }}
-                  style={{ display:'flex', alignItems:'center', gap:7, fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,255,255,0.18)', background:'none', border:'none', cursor:'pointer', transition:'color 0.18s' }}
-                  onMouseEnter={e=>(e.currentTarget.style.color='white')}
-                  onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.18)')}
-                ><ArrowLeft style={{ width:14, height:14 }}/> Back</button>
-                <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 18px', borderRadius:999, background:'rgba(255,68,0,0.08)', border:'1px solid rgba(255,68,0,0.22)', fontSize:10, fontFamily:'DM Mono,monospace', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.28em', color:'#FF4400' }}>
-                  <Sparkles style={{ width:13, height:13 }}/>{selectedTool.name}
+
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+                  {sortedTools.map((tool, i) => {
+                    const soon = tool.status === 'soon';
+                    return (
+                      <motion.button key={tool.id}
+                        className="tool-card" 
+                        initial={{ opacity:0, y:12 }}
+                        animate={{ opacity:1, y:0 }}
+                        transition={{ delay:i*0.03, duration:0.24 }}
+                        whileHover={!soon ? { y:-4, transition:{ duration:0.15 } } : {}}
+                        onClick={()=>!soon && handleToolSelect(tool)}
+                        style={{
+                          borderRadius: 12, 
+                          border: `1px solid ${soon ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)'}`, 
+                          padding:'32px 24px', 
+                          display:'flex', flexDirection:'column',
+                          alignItems:'flex-start', textAlign:'left',
+                          background: soon
+                            ? 'rgba(255,255,255,0.005)'
+                            : 'rgba(255,255,255,0.015)', 
+                          cursor: soon ? 'default' : 'pointer',
+                          opacity: soon ? 0.35 : 1, 
+                          filter: soon ? 'grayscale(100%)' : 'none', 
+                          position:'relative', overflow:'hidden',
+                          minHeight: 240, 
+                          transition:'border-color 0.2s, box-shadow 0.2s, background 0.2s',
+                          boxShadow: soon ? 'none' : 'inset 0 1px 0 rgba(255,255,255,0.02)',
+                        }}
+                      >
+                        {/* HTML Corner marks - completely fixed size */}
+                        <CornerMarks color={soon ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.12)'} size={10} thickness={1.5} />
+
+                        {/* SOON badge with custom glass shimmer effect */}
+                        {soon && (
+                          <div style={{ 
+                            position:'absolute', top:16, right:16,
+                            background:'rgba(255,255,255,0.03)',
+                            border:'1px solid rgba(255,255,255,0.08)',
+                            borderRadius:4, padding:'4px 8px',
+                            overflow:'hidden'
+                          }}>
+                            <div className="shimmer-soon" />
+                            <span style={{ 
+                              position:'relative', zIndex:2,
+                              fontSize:9, fontFamily:"'DM Sans',sans-serif", fontWeight: 600,
+                              letterSpacing:'0.05em', color:'rgba(255,255,255,0.3)', 
+                            }}>SOON</span>
+                          </div>
+                        )}
+
+                        {/* Icon container */}
+                        <div className="tool-icon-box" style={{
+                          width:48, height:48, borderRadius:10,
+                          background: soon ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.03)', 
+                          border: `1px solid ${soon ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}`, 
+                          display:'flex', alignItems:'center', justifyContent:'center',
+                          marginBottom:'auto',
+                          flexShrink: 0,
+                        }}>
+                          <tool.icon className="tool-icon" style={{ width:24, height:24, color: soon ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)' }}/>
+                        </div>
+
+                        {/* Highly readable Name + description */}
+                        <div style={{ width:'100%', marginTop:24 }}>
+                          <h3 className="tool-title" style={{
+                            fontSize:16, 
+                            fontWeight:600,
+                            fontFamily:"'DM Sans',sans-serif",
+                            letterSpacing:'0.01em',
+                            color: soon ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.85)',
+                            marginBottom:8, lineHeight:1.2,
+                            transition: 'color 0.2s'
+                          }}>{tool.name}</h3>
+                          <p style={{ 
+                            fontSize:13, 
+                            fontFamily:"'DM Sans',sans-serif", 
+                            color: soon ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', 
+                            lineHeight:1.5, 
+                            margin:0, 
+                            fontWeight:400 
+                          }}>{tool.description}</p>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
                 </div>
-              </div>
-              <div style={{ background:'#0b0b0b', border:'1px solid rgba(255,255,255,0.05)', borderRadius:26, overflow:'hidden', boxShadow:'0 24px 80px rgba(0,0,0,0.6)' }}>
-                {isLoading ? (
-                  <div style={{ height:600, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
-                    <div style={{ width:36, height:36, border:'2px solid #FF4400', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
-                    <p style={{ fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,255,255,0.18)' }}>Loading processor...</p>
-                  </div>
-                ) : processor ? (
-                  <UniversalWorkspace key={selectedTool.id} tool={selectedTool}
-                    onProcess={async (file:File,opts:any)=>{
-                      if(typeof processor.process==='function') return await processor.process(file,opts);
-                      if(typeof processor==='function') return await processor(file,opts);
-                      throw new Error('Invalid processor');
-                    }}
-                  />
-                ) : (
-                  <div style={{ height:600, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <p style={{ fontSize:10, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,80,80,0.45)' }}>Processor not available</p>
+
+                {sortedTools.length === 0 && (
+                  <div style={{ textAlign:'center', padding:'80px 40px' }}>
+                    <p style={{ fontSize:11, color:'rgba(255,255,255,0.18)', fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em' }}>No tools found</p>
                   </div>
                 )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+
+            ) : (
+              <motion.div key="workspace"
+                initial={{ opacity:0, scale:0.99 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }}
+                transition={{ duration:0.22 }}
+                style={{ padding:'26px 32px 48px', maxWidth:980, margin:'0 auto', width: '100%' }}
+              >
+                <div style={{
+                  background:'linear-gradient(160deg, #0e0e0e 0%, #080808 100%)',
+                  border:'1px solid rgba(255,255,255,0.09)',
+                  borderRadius:8,
+                  overflow:'hidden',
+                  boxShadow:'0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+                  position:'relative',
+                }}>
+                  <CornerMarks color="rgba(255,68,0,0.2)" size={12} thickness={1.2} />
+                  {isLoading ? (
+                    <div style={{ height:560, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:18 }}>
+                      <div style={{ width:28, height:28, border:'2px solid rgba(255,68,0,0.2)', borderTopColor:'#FF4400', borderRadius:'50%', animation:'spin 0.7s linear infinite' }}/>
+                      <p style={{ fontSize:8.5, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.36em', color:'rgba(255,255,255,0.18)' }}>Loading processor…</p>
+                    </div>
+                  ) : processor ? (
+                    <UniversalWorkspace key={selectedTool.id} tool={selectedTool}
+                      onProcess={async (file:File,opts:any)=>{
+                        if(typeof processor.process==='function') return await processor.process(file,opts);
+                        if(typeof processor==='function') return await processor(file,opts);
+                        throw new Error('Invalid processor');
+                      }}
+                    />
+                  ) : (
+                    <div style={{ height:560, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <p style={{ fontSize:8.5, fontFamily:'DM Mono,monospace', textTransform:'uppercase', letterSpacing:'0.3em', color:'rgba(255,80,80,0.35)' }}>Processor not available</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </main>
     </motion.div>
   );
@@ -604,18 +808,67 @@ export default function MediaMosh() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html:`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600;700;900&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         body{background:#080808;overflow:hidden;}
         @keyframes spin{to{transform:rotate(360deg);}}
+        
+        /* Shimmer Animation for Camera Options */
+        @keyframes shimmer {
+          0% { transform: translateX(-150%) skewX(-20deg); }
+          100% { transform: translateX(200%) skewX(-20deg); }
+        }
+        .shimmer-container {
+          position: absolute;
+          top: 0; left: 0; width: 50%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+          animation: shimmer 3s infinite;
+          pointer-events: none;
+        }
+
+        /* Continuous Shimmer on Tile Badges */
+        @keyframes shimmer-soon {
+          0% { transform: translateX(-150%) skewX(-20deg); }
+          100% { transform: translateX(200%) skewX(-20deg); }
+        }
+        .shimmer-soon {
+          position: absolute;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          animation: shimmer-soon 2s infinite;
+          pointer-events: none;
+        }
+
         .grain-overlay{
           background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
           background-size:180px 180px;mix-blend-mode:overlay;
         }
-        .cscroll::-webkit-scrollbar{width:3px;}
+        .cscroll::-webkit-scrollbar{width:2px;}
         .cscroll::-webkit-scrollbar-track{background:transparent;}
-        .cscroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.07);border-radius:10px;}
-        .cscroll::-webkit-scrollbar-thumb:hover{background:rgba(255,68,0,0.28);}
+        .cscroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:10px;}
+        .cscroll::-webkit-scrollbar-thumb:hover{background:rgba(255,68,0,0.35);}
+        
+        /* Tool Card Custom Hover States (Orange activates ONLY on hover) */
+        .tool-card .tool-icon { transition: color 0.2s ease; }
+        .tool-card:hover:not(:disabled) .tool-icon { color: #FF4400 !important; }
+        
+        .tool-card .tool-icon-box { transition: background 0.2s ease, border-color 0.2s ease; }
+        .tool-card:hover:not(:disabled) .tool-icon-box {
+          background: rgba(255,68,0,0.1) !important;
+          border-color: rgba(255,68,0,0.4) !important;
+        }
+        
+        .tool-card:hover:not(:disabled) .tool-title { color: rgba(255,255,255,0.95) !important; }
+
+        .tool-card:hover:not(:disabled) {
+          background: linear-gradient(145deg, rgba(255,68,0,0.06) 0%, rgba(255,255,255,0.02) 100%) !important;
+          border-color: rgba(255,68,0,0.4) !important;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+        }
+
+        /* Logo Viewfinder Hover Styles */
+        .logo-btn:hover .logo-c { box-shadow: 0 0 8px #FF4400, 0 0 16px #FF4400 !important; }
+        .logo-btn:hover .logo-label { color: #FFFFFF !important; text-shadow: 0 0 12px rgba(255,68,0,0.5); }
       `}}/>
       <div style={{ minHeight:'100vh', background:'#080808', color:'white', overflow:'hidden', fontFamily:"'DM Sans',sans-serif" }}>
         <AnimatePresence mode="wait">
