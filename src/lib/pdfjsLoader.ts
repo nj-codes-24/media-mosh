@@ -15,6 +15,7 @@ export function loadPdfjs(): Promise<any> {
         }
 
         // Dynamic import from our public directory (served as static files)
+        // @ts-ignore
         const pdfjsLib = await import(/* webpackIgnore: true */ '/pdfjs/pdf.mjs');
         const lib = pdfjsLib.default || pdfjsLib;
 
