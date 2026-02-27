@@ -1,9 +1,7 @@
-import { ToolProcessor, ProcessingOptions } from '@/lib/toolRegistry';
-
-export const imageCompressorProcessor: ToolProcessor = {
+export const imageCompressorProcessor = {
   validate: async (file: File) => file.type.startsWith('image/'),
   getDefaultOptions: () => ({ quality: 0.6, format: 'image/jpeg' }),
-  process: async (file: File, options?: ProcessingOptions): Promise<Blob> => {
+  process: async (file: File, options?: any): Promise<Blob> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = URL.createObjectURL(file);

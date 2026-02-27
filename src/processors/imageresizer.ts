@@ -1,7 +1,7 @@
-import { ProcessingOptions, ToolProcessor } from '@/lib/toolRegistry';
 import { CanvasHelper } from '@/lib/canvasHelper';
 import { ffmpegHelper } from '@/lib/ffmpegHelper';
-export const imageResizerProcessor: ToolProcessor = {
+
+export const imageResizerProcessor = {
   validate: async (file: File): Promise<boolean> => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     return validTypes.includes(file.type);
@@ -16,7 +16,7 @@ export const imageResizerProcessor: ToolProcessor = {
     format: 'same' as const // 'same' | 'jpeg' | 'png' | 'webp'
   }),
 
-  process: async (file: File, options?: ProcessingOptions): Promise<Blob> => {
+  process: async (file: File, options?: any): Promise<Blob> => {
     const {
       width = 1920,
       height = 1080,

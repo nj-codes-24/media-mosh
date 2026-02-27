@@ -1,6 +1,4 @@
-import { ToolProcessor, ProcessingOptions } from '@/lib/toolRegistry';
-
-export const bgRemoverProcessor: ToolProcessor = {
+export const bgRemoverProcessor = {
   validate: async (file: File) => {
     const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
     return validTypes.includes(file.type);
@@ -12,7 +10,7 @@ export const bgRemoverProcessor: ToolProcessor = {
     debug: false
   }),
 
-  process: async (file: File, options?: ProcessingOptions): Promise<Blob> => {
+  process: async (file: File, options?: any): Promise<Blob> => {
     // ⚡ Dynamically import the module
     const module: any = await import('@imgly/background-removal');
     

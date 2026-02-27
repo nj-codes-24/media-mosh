@@ -1,6 +1,4 @@
-import { ToolProcessor, ProcessingOptions } from '@/lib/toolRegistry';
-
-export const exifRemoverProcessor: ToolProcessor = {
+export const exifRemoverProcessor = {
   validate: async (file: File) => file.type === 'image/jpeg',
   getDefaultOptions: () => ({}),
   process: async (file: File): Promise<Blob> => {

@@ -1,7 +1,7 @@
-import { ProcessingOptions, ToolProcessor } from '@/lib/toolRegistry';
 import { CanvasHelper } from '@/lib/canvasHelper';
 import { ffmpegHelper } from '@/lib/ffmpegHelper';
-export const imageRotatorProcessor: ToolProcessor = {
+
+export const imageRotatorProcessor = {
   validate: async (file: File): Promise<boolean> => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     return validTypes.includes(file.type);
@@ -15,7 +15,7 @@ export const imageRotatorProcessor: ToolProcessor = {
     format: 'same' as const
   }),
 
-  process: async (file: File, options?: ProcessingOptions): Promise<Blob> => {
+  process: async (file: File, options?: any): Promise<Blob> => {
     const {
       rotation = 0,
       flipHorizontal = false,
