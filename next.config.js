@@ -18,6 +18,15 @@ const nextConfig = {
   },
 
   webpack: (config, { isServer }) => {
+    // ─── VERCEL BUILD FIX (Fixes Terser import.meta crash in ONNX WebGPU) ───
+    config.module.rules.push({
+      test: /\.m?js$/,
+      type: "javascript/auto",
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+
     // ─── WASM Support (Required for FFmpeg & AI Processors) ─────────────────
     config.module.rules.push({
       test: /\.wasm$/,
