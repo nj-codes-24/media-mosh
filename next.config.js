@@ -18,22 +18,35 @@ const nextConfig = {
   },
 
   webpack: (config, { isServer }) => {
-    // ─── VERCEL BUILD FIX (Fixes Terser import.meta crash) ──────────────────
-    // IMPORTANT: Exclude onnxruntime-web so its import.meta.url is NOT rewritten.
-    // The generic javascript/auto rule breaks onnxruntime-web's internal
-    // URL resolution, causing "url.replace is not a function" at runtime.
+    // ─── VERCEL BUILD FIX (Fixes Terser import.meta crash in ONNX WebGPU) ───
     config.module.rules.push({
       test: /\.m?js$/,
-      exclude: /node_modules[\\/]onnxruntime/,
       type: "javascript/auto",
       resolve: {
         fullySpecified: false,
       },
     });
 
+    // ─── FIX: Stop Webpack from transforming URL patterns in onnxruntime-web ──
+    // onnxruntime-web uses `new URL('./file.wasm', import.meta.url)` to resolve
+    // its WASM files at runtime. Without `parser.url: false`, Webpack replaces
+    // the URL with a module object reference → "url.replace is not a function".
+    // The javascript/auto rule above is still needed for Terser compatibility.
+    config.module.rules.push({
+      test: /node_modules[\\/]onnxruntime-web/,
+      parser: {
+        url: false,
+      },
+    });
+
     // ─── WASM Support (Required for FFmpeg & AI Processors) ─────────────────
+    // IMPORTANT: Exclude onnxruntime-web's .wasm files from the asset/resource
+    // rule. onnxruntime-web resolves its own WASM files at runtime via
+    // import.meta.url. Treating them as asset/resource causes Webpack to turn
+    // them into module objects, breaking "url.replace is not a function".
     config.module.rules.push({
       test: /\.wasm$/,
+      exclude: /node_modules[\\/]onnxruntime/,
       type: 'asset/resource',
     });
 
