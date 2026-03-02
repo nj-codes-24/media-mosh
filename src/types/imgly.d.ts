@@ -1,12 +1,16 @@
 // src/types/imgly.d.ts
 declare module '@imgly/background-removal' {
   interface Config {
-    model?: 'small' | 'medium';
+    publicPath?: string;
+    model?: 'isnet' | 'isnet_fp16' | 'isnet_quint8';
+    device?: 'cpu' | 'gpu';
     output?: {
-      type?: string;
+      format?: string;
       quality?: number;
+      type?: 'foreground' | 'background' | 'mask';
     };
     debug?: boolean;
+    progress?: (key: string, current: number, total: number) => void;
   }
 
   function removeBackground(

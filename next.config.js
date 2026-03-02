@@ -11,16 +11,20 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
         ],
       },
     ];
   },
 
   webpack: (config, { isServer }) => {
-    // ─── VERCEL BUILD FIX (Fixes Terser import.meta crash in ONNX WebGPU) ───
+    // ─── VERCEL BUILD FIX (Fixes Terser import.meta crash) ──────────────────
+    // IMPORTANT: Exclude onnxruntime-web so its import.meta.url is NOT rewritten.
+    // The generic javascript/auto rule breaks onnxruntime-web's internal
+    // URL resolution, causing "url.replace is not a function" at runtime.
     config.module.rules.push({
       test: /\.m?js$/,
+      exclude: /node_modules[\\/]onnxruntime/,
       type: "javascript/auto",
       resolve: {
         fullySpecified: false,
@@ -40,19 +44,12 @@ const nextConfig = {
     };
 
     // ─── Web Worker Support ──────────────────────────────────────────────────
-    // This is the critical fix: tells Webpack 5 how to bundle .ts worker files
-    // when they are referenced via `new Worker(new URL('./file.ts', import.meta.url))`
     config.module.rules.push({
-      // Match any file ending in Worker.ts or worker.ts
       test: /Worker\.ts$/,
       use: [
         {
-          // Use ts-loader (or babel-loader) inside the worker bundle
           loader: 'ts-loader',
-          options: {
-            // Don't type-check workers — just transpile (faster)
-            transpileOnly: true,
-          },
+          options: { transpileOnly: true },
         },
       ],
     });
@@ -61,13 +58,11 @@ const nextConfig = {
     if (!isServer) {
       config.resolve.alias = {
         ...config.resolve.alias,
-        // Ignore Node.js-only packages in the browser
         'onnxruntime-node': false,
         sharp: false,
         fs: false,
         path: false,
         crypto: false,
-        // ─── PDFJS FIX: prevent crash on optional native canvas module ───
         canvas: false,
       };
 
@@ -79,13 +74,8 @@ const nextConfig = {
         stream: false,
       };
 
-      // ── CRITICAL: Teach Webpack how to handle `new Worker(new URL(...))` ──
-      // Without this, the worker URL resolves to undefined at runtime and the
-      // Worker constructor throws immediately, making it look like the original
-      // video is "returned instantly" (nothing was processed).
       config.output = {
         ...config.output,
-        // Ensures worker chunks get a stable, loadable URL
         workerChunkLoading: 'import-scripts',
       };
     }
@@ -95,27 +85,25 @@ const nextConfig = {
       config.externals.push({
         sharp: 'commonjs sharp',
         'onnxruntime-node': 'commonjs onnxruntime-node',
+        'onnxruntime-web': 'commonjs onnxruntime-web',
         '@ffmpeg/ffmpeg': 'commonjs @ffmpeg/ffmpeg',
         '@ffmpeg/util': 'commonjs @ffmpeg/util',
       });
     }
 
-    // ─── Prevent Webpack from statically resolving dynamic AI imports ─────────
-    // @xenova/transformers loads ONNX/WASM files dynamically at runtime.
-    // Without this, Webpack tries to bundle them and throws "module not found".
+    // ─── Prevent Webpack from statically resolving dynamic AI imports ────────
     config.module.rules.push({
-      test: /node_modules\/@xenova\/transformers/,
+      test: /node_modules[\\/]@xenova[\\/]transformers/,
       type: 'javascript/auto',
     });
 
-    // Handle 'node:' protocol imports used by newer ONNX runtime versions
+    // Handle 'node:' protocol imports
     config.resolve.alias = {
       ...config.resolve.alias,
       'node:path': require.resolve('path'),
       'node:fs': false,
       'node:url': false,
       'node:os': false,
-      // ─── PDFJS FIX: prevent crash on optional native canvas module ───
       canvas: false,
     };
 
