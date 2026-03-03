@@ -3,26 +3,323 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 24, 24, 27; /* zinc-900 */
-  --background-start-rgb: 250, 250, 250; /* zinc-50 */
+  --foreground-rgb: 24, 24, 27;
+  /* zinc-900 */
+  --background-start-rgb: 250, 250, 250;
+  /* zinc-50 */
 }
 
 @layer base {
   body {
     @apply bg-zinc-50 text-zinc-900 antialiased;
     /* This creates the "Professional Studio" mesh background */
-    background-image: 
+    background-image:
       radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.03) 0px, transparent 50%),
       radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
   }
 }
 
 @keyframes shine {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(200%); }
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(200%);
+  }
 }
-.animate-shine { animation: shine 3s infinite linear; }
+
+.animate-shine {
+  animation: shine 3s infinite linear;
+}
 
 .glass-panel {
   @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE LAYOUT — Adapts existing design to all screen sizes
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Landing Page ────────────────────────────────────────────────────────────── */
+
+/* Camera container: scale down on smaller screens */
+.camera-wrapper {
+  transform-origin: center center;
+}
+
+/* Mobile CTA grid: hidden on desktop */
+.mobile-cta-grid {
+  display: none;
+}
+
+/* ── Mobile (≤768px) — hide camera, show CTA grid ────────────────────────── */
+@media (max-width: 768px) {
+
+  /* Landing: stack vertically, center everything */
+  .landing-content {
+    flex-direction: column !important;
+    padding: 0 24px !important;
+    gap: 0 !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .landing-text {
+    width: 100% !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .landing-text .subtitle-line {
+    justify-content: center !important;
+  }
+
+  .landing-nav {
+    padding: 12px 20px !important;
+    min-height: 48px !important;
+  }
+
+  /* Hide the camera entirely — too big for mobile */
+  .camera-section {
+    display: none !important;
+  }
+
+  /* Show the mobile CTA grid */
+  .mobile-cta-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 28px;
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .mobile-cta-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+
+  .mobile-cta-btn:active {
+    background: rgba(255, 68, 0, 0.15);
+    border-color: rgba(255, 68, 0, 0.5);
+  }
+
+  /* Dashboard */
+  .dash-sidebar {
+    display: none !important;
+  }
+
+  .dash-topbar {
+    padding: 10px 12px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .dash-topbar .tab-bar {
+    order: 2;
+    width: 100%;
+  }
+
+  .dash-topbar .search-box {
+    order: 1;
+    width: 100% !important;
+  }
+
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .dash-grid-wrap {
+    padding: 16px 12px 32px !important;
+  }
+
+  .dash-workspace-wrap {
+    padding: 12px 8px 24px !important;
+  }
+
+  .dash-category-header h2 {
+    font-size: 36px !important;
+  }
+
+  .tool-card {
+    min-height: 180px !important;
+    padding: 24px 16px !important;
+  }
+}
+
+/* ── Very small phones (≤380px) ───────────────────────────────────────────── */
+@media (max-width: 380px) {
+  .landing-text h1 {
+    font-size: clamp(56px, 18vw, 80px) !important;
+  }
+
+  .mobile-cta-grid {
+    gap: 8px;
+  }
+
+  .mobile-cta-btn {
+    padding: 12px 12px;
+    gap: 10px;
+  }
+
+  .dash-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Tablets (769–1024px) ─────────────────────────────────────────────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .landing-content {
+    padding: 0 24px !important;
+  }
+
+  .landing-text {
+    width: 42% !important;
+  }
+
+  .camera-wrapper {
+    transform: scale(0.72);
+    margin: -60px -50px;
+  }
+
+  .landing-nav {
+    padding: 16px 24px !important;
+  }
+
+  .dash-sidebar {
+    width: 180px !important;
+  }
+
+  .dash-topbar {
+    padding: 14px 20px !important;
+  }
+
+  .dash-topbar .search-box {
+    width: 160px !important;
+  }
+
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .dash-grid-wrap {
+    padding: 22px 20px 40px !important;
+  }
+
+  .dash-workspace-wrap {
+    padding: 20px 16px 36px !important;
+  }
+}
+
+/* ── Small desktops (1025–1280px) ──────────────────────────────────────────── */
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .landing-text {
+    width: 36% !important;
+  }
+
+  .camera-wrapper {
+    transform: scale(0.82);
+    margin: -30px -30px;
+  }
+
+  .dash-sidebar {
+    width: 200px !important;
+  }
+}
+
+/* ── Mobile sidebar toggle ─────────────────────────────────────────────────── */
+.mobile-sidebar-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: linear-gradient(180deg, rgba(255, 68, 0, 0.9), rgba(204, 34, 0, 0.9));
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(255, 68, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .mobile-sidebar-toggle {
+    display: block;
+  }
+}
+
+/* Mobile sidebar overlay */
+.mobile-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.mobile-sidebar-overlay.open {
+  display: block;
+}
+
+.dash-sidebar.mobile-open {
+  display: flex !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  z-index: 1001 !important;
+  width: 260px !important;
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* ── UniversalWorkspace responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .workspace-split {
+    flex-direction: column !important;
+  }
+
+  .workspace-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .workspace-preview {
+    max-height: 320px !important;
+  }
+}
+
+/* ── Custom scrollbar (already existed, kept consistent) ──────────────────── */
+.cscroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.cscroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.cscroll::-webkit-scrollbar-track {
+  background: transparent;
 }
