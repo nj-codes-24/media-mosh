@@ -54,7 +54,7 @@ export const toolRegistry: ToolMetadata[] = [
   { id: 'pdf-merger', name: 'Merge PDFs', category: 'pdf', description: 'Combine multiple PDF files into one', icon: Files, status: 'ready', inputFormats: ['application/pdf'], outputFormats: ['application/pdf'], processingEngine: 'PDF-lib (WASM)' },
   { id: 'pdf-remove-page', name: 'Remove Pages', category: 'pdf', description: 'Quickly delete pages by number', icon: FileMinus, status: 'soon', inputFormats: ['application/pdf'], outputFormats: ['application/pdf'], processingEngine: 'PDF-lib (WASM)' },
   { id: 'pdf-compress', name: 'Compress PDF', category: 'pdf', description: 'Reduce PDF file size by resampling embedded images', icon: Minimize2, status: 'ready', inputFormats: ['application/pdf'], outputFormats: ['application/pdf'], processingEngine: 'PDF-lib (WASM)' },
-  { id: 'pdf-converter', name: 'File Format Changer', category: 'pdf', description: 'Convert between PDF, Word, Excel, and PowerPoint', icon: FileArchive, status: 'ready', inputFormats: ['.pdf', '.docx', '.xlsx', '.pptx'], outputFormats: ['.pdf', '.docx', '.xlsx', '.pptx'], processingEngine: 'Format Engine', features: ['PDF', 'Word', 'Excel'] }
+  { id: 'pdf-converter', name: 'File Format Changer', category: 'pdf', description: 'Convert between PDF, Word, Excel, and PowerPoint', icon: FileArchive, status: 'soon', inputFormats: ['.pdf', '.docx', '.xlsx', '.pptx'], outputFormats: ['.pdf', '.docx', '.xlsx', '.pptx'], processingEngine: 'Format Engine', features: ['PDF', 'Word', 'Excel'] }
 ];
 
 export const getToolsByCategory = (category: MediaType) => toolRegistry.filter(tool => tool.category === category);
