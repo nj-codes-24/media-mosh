@@ -31,7 +31,7 @@ const parsePdfPageInput = (
       ) {
         const [start, end] = rangeParts;
         for (let i = Math.max(1, start); i <= Math.min(total, end); i++) {
-          pages.add(i - 1); 
+          pages.add(i - 1);
         }
       } else if (rangeParts.length >= 1 && !isNaN(rangeParts[0])) {
         const n = rangeParts[0];
@@ -222,7 +222,7 @@ const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceU
     setRenderError(null);
 
     const fetchPage = async () => {
-      if (sourceUrl) return; 
+      if (sourceUrl) return;
       if (!fileObject && !srcFile) return;
 
       try {
@@ -302,7 +302,7 @@ const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceU
 
   if (renderError) {
     return (
-      <div className="flex items-center justify-center bg-white rounded-sm shadow-2xl" style={{width: 300, height: 400}}>
+      <div className="flex items-center justify-center bg-white rounded-sm shadow-2xl" style={{ width: 300, height: 400 }}>
         <div className="text-center p-4">
           <p className="text-red-400 text-xs font-bold mb-1">Preview Error</p>
           <p className="text-zinc-500 text-[10px] font-mono">{renderError}</p>
@@ -313,7 +313,7 @@ const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceU
 
   if (!pdfPage && !sourceUrl) {
     return (
-      <div className="flex items-center justify-center bg-white rounded-sm shadow-2xl" style={{width: 300, height: 400}}>
+      <div className="flex items-center justify-center bg-white rounded-sm shadow-2xl" style={{ width: 300, height: 400 }}>
         <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
       </div>
     );
@@ -497,7 +497,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const [resultSize, setResultSize] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasInitiated, setHasInitiated] = useState(false);
-  
+
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -539,8 +539,8 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     sourceLabel: string;
     originalIndex: number;
     rotation: number;
-    file?: File;          
-    sourceUrl?: string;   
+    file?: File;
+    sourceUrl?: string;
   }
   const [pdfManagerPages, setPdfManagerPages] = useState<PdfManagerPage[]>([]);
   const [pdfManagerActiveId, setPdfManagerActiveId] = useState<string | null>(null);
@@ -588,7 +588,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
       e.preventDefault();
       e.stopPropagation();
     };
-    
+
     // Prevent browser from opening files dragged outside the dropzone
     window.addEventListener('dragover', preventDefaults);
     window.addEventListener('drop', preventDefaults);
@@ -603,7 +603,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     const handlePaste = (e: ClipboardEvent) => {
       // Ignore if typing in text inputs (e.g. prompt bar, url bar)
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
-      
+
       if (e.clipboardData && e.clipboardData.files.length > 0) {
         e.preventDefault();
         const pastedFiles = Array.from(e.clipboardData.files);
@@ -614,7 +614,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files, file, isPdfMultiInput]);
 
   // ── Local Dropzone Handlers ──────────────────────────────────────────────
@@ -714,7 +714,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     setResultDimensions(null);
     setImageUrlInput('');
     setUrlError(null);
-    
+
     setPdfManagerPages([]);
     setPdfManagerActiveId(null);
     setPdfManagerUnsaved(false);
@@ -783,19 +783,19 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
           const arrayBuffer = await newFiles[0].arrayBuffer();
           const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
           const count = pdfDoc.getPageCount();
-          
-          const initialNodes: PdfManagerPage[] = Array.from({length: count}).map((_, i) => ({
-             id: `main-${Date.now()}-${i}`,
-             sourceId: 'main',
-             sourceType: 'main',
-             sourceLabel: newFiles[0].name,
-             originalIndex: i,
-             rotation: 0,
+
+          const initialNodes: PdfManagerPage[] = Array.from({ length: count }).map((_, i) => ({
+            id: `main-${Date.now()}-${i}`,
+            sourceId: 'main',
+            sourceType: 'main',
+            sourceLabel: newFiles[0].name,
+            originalIndex: i,
+            rotation: 0,
           }));
-          
+
           setPdfManagerPages(initialNodes);
           if (initialNodes.length > 0) setPdfManagerActiveId(initialNodes[0].id);
-          
+
         } catch (err) {
           console.error('[UniversalWorkspace] Initial load failed:', err);
           setError('Could not read the PDF to initialize the Page Manager.');
@@ -827,19 +827,19 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageUrlInput) return;
-    
+
     setIsFetchingUrl(true);
     setUrlError(null);
-    
+
     try {
       const response = await fetch(`/api/fetch-image?url=${encodeURIComponent(imageUrlInput)}`);
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.error || 'Network response was not ok');
       }
-      
+
       const blob = await response.blob();
-      
+
       let filename = imageUrlInput.split('/').pop()?.split('?')[0] || 'url-image.jpg';
       if (!filename.includes('.')) {
         const ext = blob.type.split('/')[1] || 'jpg';
@@ -887,8 +887,8 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     if (!e.target.files || !e.target.files[0] || insertIndexTarget === null) return;
     const imgFile = e.target.files[0];
     const newId = `img-${Date.now()}`;
-    const newNode: PdfManagerPage = { 
-       id: newId, sourceId: newId, sourceType: 'image', sourceLabel: imgFile.name, originalIndex: 0, rotation: 0, file: imgFile, sourceUrl: URL.createObjectURL(imgFile) 
+    const newNode: PdfManagerPage = {
+      id: newId, sourceId: newId, sourceType: 'image', sourceLabel: imgFile.name, originalIndex: 0, rotation: 0, file: imgFile, sourceUrl: URL.createObjectURL(imgFile)
     };
     const newPages = [...pdfManagerPages];
     newPages.splice(insertIndexTarget, 0, newNode);
@@ -902,24 +902,24 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     if (!e.target.files || !e.target.files[0] || insertIndexTarget === null) return;
     const docFile = e.target.files[0];
     const docId = `doc-${Date.now()}`;
-    
+
     setProcessing(true); // show generic loader briefly
     try {
       const { PDFDocument } = await import('pdf-lib');
       const arrayBuffer = await docFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       const count = pdfDoc.getPageCount();
-      
-      const newNodes: PdfManagerPage[] = Array.from({length: count}).map((_, i) => ({
-         id: `${docId}-${i}`, sourceId: docId, sourceType: 'doc', sourceLabel: docFile.name, originalIndex: i, rotation: 0, file: docFile
+
+      const newNodes: PdfManagerPage[] = Array.from({ length: count }).map((_, i) => ({
+        id: `${docId}-${i}`, sourceId: docId, sourceType: 'doc', sourceLabel: docFile.name, originalIndex: i, rotation: 0, file: docFile
       }));
-      
+
       const newPages = [...pdfManagerPages];
       newPages.splice(insertIndexTarget, 0, ...newNodes);
       setPdfManagerPages(newPages);
       if (newNodes.length > 0) setPdfManagerActiveId(newNodes[0].id);
       setPdfManagerUnsaved(true);
-      
+
     } catch (err) {
       console.error(err); setError('Could not parse the inserted PDF.');
     } finally {
@@ -931,13 +931,13 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const handlePdfManagerRotate = (direction: 'cw' | 'ccw') => {
     if (!pdfManagerActiveId) return;
     setPdfManagerPages(prev => prev.map(p => {
-       if (p.id === pdfManagerActiveId) {
-          let newRot = p.rotation + (direction === 'cw' ? 90 : -90);
-          if (newRot >= 360) newRot -= 360;
-          if (newRot <= -360) newRot += 360;
-          return { ...p, rotation: newRot };
-       }
-       return p;
+      if (p.id === pdfManagerActiveId) {
+        let newRot = p.rotation + (direction === 'cw' ? 90 : -90);
+        if (newRot >= 360) newRot -= 360;
+        if (newRot <= -360) newRot += 360;
+        return { ...p, rotation: newRot };
+      }
+      return p;
     }));
     setPdfManagerUnsaved(true);
   };
@@ -965,7 +965,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   const handlePdfManagerExtract = async (node: PdfManagerPage) => {
     setProcessing(true);
     try {
-      const result = await onProcess(file!, { pages: [node] }); 
+      const result = await onProcess(file!, { pages: [node] });
       const dlUrl = URL.createObjectURL(result);
       const a = document.createElement('a');
       a.href = dlUrl; a.download = `extracted_page_${node.originalIndex + 1}.pdf`;
@@ -1020,13 +1020,13 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
     canvas.toBlob((blob) => {
       if (blob) {
         setResultUrl(URL.createObjectURL(blob));
         setResultSize(blob.size);
         setHasInitiated(true);
-        setOptions({ ...options, format: 'png' }); 
+        setOptions({ ...options, format: 'png' });
       }
     }, 'image/png');
   };
@@ -1321,7 +1321,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
       img.onload = () => setResultDimensions({ w: img.width, h: img.height });
       img.src = resultUrl;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultUrl, selectedBgColor, customBgUrl]);
 
   // ── TTS ──────────────────────────────────────────────────────────────────
@@ -1413,14 +1413,14 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   return (
     <div className="flex flex-col h-full bg-[#050505] text-white font-sans overflow-hidden">
 
-      <header className="flex-shrink-0 px-8 py-5 border-b border-white/5 flex items-center justify-between bg-black/40 backdrop-blur-xl z-20">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-            <Zap className="w-6 h-6 text-black fill-current" />
+      <header className="ws-header flex-shrink-0 px-4 py-3 md:px-8 md:py-5 border-b border-white/5 flex items-center justify-between bg-black/40 backdrop-blur-xl z-20">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="ws-icon w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+            <Zap className="w-5 h-5 md:w-6 md:h-6 text-black fill-current" />
           </div>
           <div>
-            <h1 className="text-xl font-black uppercase tracking-[0.25em] leading-none">{tool.name}</h1>
-            <p className="text-[9px] text-cyan-500/80 font-bold tracking-[0.2em] uppercase mt-1.5 italic">Engine V2.0 // Studio Ready</p>
+            <h1 className="text-sm md:text-xl font-black uppercase tracking-[0.15em] md:tracking-[0.25em] leading-none">{tool.name}</h1>
+            <p className="text-[8px] md:text-[9px] text-cyan-500/80 font-bold tracking-[0.2em] uppercase mt-1 md:mt-1.5 italic">Engine V2.0 // Studio Ready</p>
           </div>
         </div>
       </header>
@@ -1428,8 +1428,8 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
 
         {/* ── SIDEBAR ── */}
-        <aside className={`${isSplitter ? 'w-full bg-[#050505] items-center' : 'w-full lg:w-[360px] bg-black/40 border-r border-white/5'} transition-all duration-500 p-8 flex flex-col z-10 shadow-2xl overflow-y-auto custom-scrollbar`}>
-          <div className={`flex-1 space-y-8 ${isSplitter ? 'w-full max-w-4xl' : ''}`}>
+        <aside className={`ws-sidebar ${isSplitter ? 'w-full bg-[#050505] items-center' : 'w-full lg:w-[360px] bg-black/40 border-r border-white/5'} transition-all duration-500 p-4 md:p-8 flex flex-col z-10 shadow-2xl overflow-y-auto custom-scrollbar`}>
+          <div className={`flex-1 space-y-6 md:space-y-8 ${isSplitter ? 'w-full max-w-4xl' : ''}`}>
 
             <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] flex items-center gap-3">
               <Settings className="w-3.5 h-3.5" /> {isSplitter ? 'Studio Console' : 'Parameters'}
@@ -1441,131 +1441,131 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
 
                   {/* ── PDF PAGE MANAGER (Tree) UI ── */}
                   {isPdfManager && file && (
-                     <div className="space-y-6">
-                        {/* Top action bar */}
-                        <div className="flex gap-2">
-                           <button 
-                             disabled={processing || !pdfManagerUnsaved || pdfManagerPages.length === 0} 
-                             onClick={() => handleProcess()} 
-                             className="flex-1 py-4 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-400 transition-all disabled:opacity-30 disabled:bg-zinc-800 disabled:text-zinc-500 cursor-pointer flex items-center justify-center gap-2"
-                           >
-                             {processing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                             {processing ? 'Processing…' : 'Download Document'}
-                           </button>
-                           <button onClick={handleReset} className="px-5 py-4 bg-white/5 border border-white/10 text-zinc-400 rounded-2xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center" title="Start Over">
-                             <RotateCcw className="w-4 h-4" />
-                           </button>
+                    <div className="space-y-6">
+                      {/* Top action bar */}
+                      <div className="flex gap-2">
+                        <button
+                          disabled={processing || !pdfManagerUnsaved || pdfManagerPages.length === 0}
+                          onClick={() => handleProcess()}
+                          className="flex-1 py-4 bg-emerald-500 text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-400 transition-all disabled:opacity-30 disabled:bg-zinc-800 disabled:text-zinc-500 cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          {processing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          {processing ? 'Processing…' : 'Download Document'}
+                        </button>
+                        <button onClick={handleReset} className="px-5 py-4 bg-white/5 border border-white/10 text-zinc-400 rounded-2xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center" title="Start Over">
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {resultUrl && !pdfManagerUnsaved && (
+                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+                          <p className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">Document downloaded successfully!</p>
                         </div>
-                        
-                        {resultUrl && !pdfManagerUnsaved && (
-                           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
-                              <p className="text-[9px] font-black uppercase text-emerald-400 tracking-widest">Document downloaded successfully!</p>
-                           </div>
-                        )}
+                      )}
 
-                        {error && <div className="p-3 bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400 rounded-xl">{error}</div>}
+                      {error && <div className="p-3 bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400 rounded-xl">{error}</div>}
 
-                        {/* Visual Tree */}
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex justify-between mb-4">
-                            <span>Document Structure</span>
-                            <span className="text-[8px] font-bold flex items-center gap-1">
-                              {pdfManagerActiveId ? (
-                                <>
-                                  <span className="px-1 py-0.5 bg-white/10 rounded text-zinc-400">←→</span>
-                                  <span className="text-zinc-600">browse</span>
-                                  <span className="mx-1 text-zinc-700">·</span>
-                                  <span className="px-1 py-0.5 bg-white/10 rounded text-zinc-400">↑↓</span>
-                                  <span className="text-zinc-600">reorder</span>
-                                </>
-                              ) : (
-                                <span className="text-zinc-600">{pdfManagerPages.length} Pages</span>
-                              )}
-                            </span>
-                          </label>
+                      {/* Visual Tree */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex justify-between mb-4">
+                          <span>Document Structure</span>
+                          <span className="text-[8px] font-bold flex items-center gap-1">
+                            {pdfManagerActiveId ? (
+                              <>
+                                <span className="px-1 py-0.5 bg-white/10 rounded text-zinc-400">←→</span>
+                                <span className="text-zinc-600">browse</span>
+                                <span className="mx-1 text-zinc-700">·</span>
+                                <span className="px-1 py-0.5 bg-white/10 rounded text-zinc-400">↑↓</span>
+                                <span className="text-zinc-600">reorder</span>
+                              </>
+                            ) : (
+                              <span className="text-zinc-600">{pdfManagerPages.length} Pages</span>
+                            )}
+                          </span>
+                        </label>
 
-                          <div className="max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                            <Reorder.Group axis="y" values={pdfManagerPages} onReorder={(newOrder) => { setPdfManagerPages(newOrder); setPdfManagerUnsaved(true); }} className="space-y-0 relative">
-                               {pdfManagerPages.map((p, idx) => {
-                                  const isFirstOfGroup = idx === 0 || pdfManagerPages[idx - 1].sourceId !== p.sourceId;
-                                  
-                                  return (
-                                    <React.Fragment key={p.id}>
-                                       {/* Hover Insert Gap Top */}
-                                       <div className="h-2 -my-1 relative z-10 group/insert cursor-pointer flex items-center justify-center">
-                                          <div className="absolute inset-x-0 h-[2px] bg-cyan-500/0 group-hover/insert:bg-cyan-500/50 transition-colors" />
-                                          <div className="absolute opacity-0 scale-90 group-hover/insert:opacity-100 group-hover/insert:scale-100 transition-all flex gap-1 bg-[#111] p-1 border border-cyan-500/50 rounded-lg shadow-xl z-50">
-                                            <button onClick={() => handlePdfManagerInsertBlank(idx)} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Blank</button>
-                                            <button onClick={() => { setInsertIndexTarget(idx); insertImageInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Image</button>
-                                            <button onClick={() => { setInsertIndexTarget(idx); insertDocInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Doc</button>
-                                          </div>
-                                       </div>
+                        <div className="max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                          <Reorder.Group axis="y" values={pdfManagerPages} onReorder={(newOrder) => { setPdfManagerPages(newOrder); setPdfManagerUnsaved(true); }} className="space-y-0 relative">
+                            {pdfManagerPages.map((p, idx) => {
+                              const isFirstOfGroup = idx === 0 || pdfManagerPages[idx - 1].sourceId !== p.sourceId;
 
-                                       {isFirstOfGroup && (
-                                          <div className="flex items-center gap-2 mb-1 mt-3 pl-1">
-                                            {p.sourceType === 'main' || p.sourceType === 'doc' ? <FileText className="w-3 h-3 text-zinc-500" /> : p.sourceType === 'image' ? <ImageIcon className="w-3 h-3 text-emerald-500" /> : <Square className="w-3 h-3 text-zinc-500" />}
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 truncate">{p.sourceLabel}</span>
-                                          </div>
-                                       )}
+                              return (
+                                <React.Fragment key={p.id}>
+                                  {/* Hover Insert Gap Top */}
+                                  <div className="h-2 -my-1 relative z-10 group/insert cursor-pointer flex items-center justify-center">
+                                    <div className="absolute inset-x-0 h-[2px] bg-cyan-500/0 group-hover/insert:bg-cyan-500/50 transition-colors" />
+                                    <div className="absolute opacity-0 scale-90 group-hover/insert:opacity-100 group-hover/insert:scale-100 transition-all flex gap-1 bg-[#111] p-1 border border-cyan-500/50 rounded-lg shadow-xl z-50">
+                                      <button onClick={() => handlePdfManagerInsertBlank(idx)} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Blank</button>
+                                      <button onClick={() => { setInsertIndexTarget(idx); insertImageInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Image</button>
+                                      <button onClick={() => { setInsertIndexTarget(idx); insertDocInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Doc</button>
+                                    </div>
+                                  </div>
 
-                                       <Reorder.Item
-                                         value={p}
-                                         onClick={() => setPdfManagerActiveId(p.id)}
-                                         dragTransition={{ bounceStiffness: 600, bounceDamping: 30 }}
-                                         whileDrag={{ scale: 1.03, boxShadow: '0 8px 30px rgba(0,0,0,0.5)', zIndex: 50, opacity: 0.95 }}
-                                         transition={{ duration: 0.15 }}
-                                         className={`relative flex items-center gap-3 p-3 rounded-xl border cursor-grab active:cursor-grabbing mb-1
+                                  {isFirstOfGroup && (
+                                    <div className="flex items-center gap-2 mb-1 mt-3 pl-1">
+                                      {p.sourceType === 'main' || p.sourceType === 'doc' ? <FileText className="w-3 h-3 text-zinc-500" /> : p.sourceType === 'image' ? <ImageIcon className="w-3 h-3 text-emerald-500" /> : <Square className="w-3 h-3 text-zinc-500" />}
+                                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 truncate">{p.sourceLabel}</span>
+                                    </div>
+                                  )}
+
+                                  <Reorder.Item
+                                    value={p}
+                                    onClick={() => setPdfManagerActiveId(p.id)}
+                                    dragTransition={{ bounceStiffness: 600, bounceDamping: 30 }}
+                                    whileDrag={{ scale: 1.03, boxShadow: '0 8px 30px rgba(0,0,0,0.5)', zIndex: 50, opacity: 0.95 }}
+                                    transition={{ duration: 0.15 }}
+                                    className={`relative flex items-center gap-3 p-3 rounded-xl border cursor-grab active:cursor-grabbing mb-1
                                             ${pdfManagerActiveId === p.id ? 'bg-cyan-500/10 border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 'bg-white/5 border-transparent hover:bg-white/10'}
                                          `}
-                                       >
-                                         <GripVertical className="w-3.5 h-3.5 text-zinc-600 flex-shrink-0" />
-                                         {p.sourceType === 'image' && p.sourceUrl ? (
-                                           <div className={`w-5 h-7 border rounded flex-shrink-0 overflow-hidden ${pdfManagerActiveId === p.id ? 'border-cyan-500/50' : 'border-white/10'}`}>
-                                             <div className="w-full h-full bg-cover bg-center opacity-60" style={{backgroundImage: `url(${p.sourceUrl})`, transform: `rotate(${p.rotation}deg)`}} />
-                                           </div>
-                                         ) : p.sourceType === 'blank' ? (
-                                           <div className={`w-5 h-7 border rounded flex-shrink-0 flex items-center justify-center text-[9px] font-black ${pdfManagerActiveId === p.id ? 'border-cyan-500/50 text-cyan-400 bg-cyan-500/5' : 'border-white/10 text-zinc-500 bg-black'}`}>
-                                             <span>+</span>
-                                           </div>
-                                         ) : null}
-                                         <div className="flex-1 truncate pr-2">
-                                            <p className={`text-[10px] font-bold ${pdfManagerActiveId === p.id ? 'text-white' : 'text-zinc-400'}`}>
-                                              Page {p.sourceType === 'blank' ? 'Blank' : p.originalIndex + 1}
-                                            </p>
-                                            {p.rotation !== 0 && <p className="text-[8px] text-cyan-500 font-bold uppercase mt-0.5 tracking-wider">{p.rotation}° Rotated</p>}
-                                         </div>
-                                         
-                                         <div className="flex gap-0.5 opacity-50 hover:opacity-100 transition-opacity">
-                                            <button onClick={(e) => handlePdfManagerDuplicate(p, e)} className="p-1.5 hover:bg-white/10 rounded-md text-zinc-400 hover:text-white transition-colors"><CopyPlus className="w-3.5 h-3.5" /></button>
-                                            <button onClick={(e) => handlePdfManagerDelete(p.id, e)} className="p-1.5 hover:bg-red-500/20 rounded-md text-zinc-400 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                                         </div>
-                                       </Reorder.Item>
+                                  >
+                                    <GripVertical className="w-3.5 h-3.5 text-zinc-600 flex-shrink-0" />
+                                    {p.sourceType === 'image' && p.sourceUrl ? (
+                                      <div className={`w-5 h-7 border rounded flex-shrink-0 overflow-hidden ${pdfManagerActiveId === p.id ? 'border-cyan-500/50' : 'border-white/10'}`}>
+                                        <div className="w-full h-full bg-cover bg-center opacity-60" style={{ backgroundImage: `url(${p.sourceUrl})`, transform: `rotate(${p.rotation}deg)` }} />
+                                      </div>
+                                    ) : p.sourceType === 'blank' ? (
+                                      <div className={`w-5 h-7 border rounded flex-shrink-0 flex items-center justify-center text-[9px] font-black ${pdfManagerActiveId === p.id ? 'border-cyan-500/50 text-cyan-400 bg-cyan-500/5' : 'border-white/10 text-zinc-500 bg-black'}`}>
+                                        <span>+</span>
+                                      </div>
+                                    ) : null}
+                                    <div className="flex-1 truncate pr-2">
+                                      <p className={`text-[10px] font-bold ${pdfManagerActiveId === p.id ? 'text-white' : 'text-zinc-400'}`}>
+                                        Page {p.sourceType === 'blank' ? 'Blank' : p.originalIndex + 1}
+                                      </p>
+                                      {p.rotation !== 0 && <p className="text-[8px] text-cyan-500 font-bold uppercase mt-0.5 tracking-wider">{p.rotation}° Rotated</p>}
+                                    </div>
 
-                                       {/* Final Gap at very end */}
-                                       {idx === pdfManagerPages.length - 1 && (
-                                           <div className="h-4 mt-1 relative z-10 group/insert cursor-pointer flex items-center justify-center">
-                                              <div className="absolute inset-x-0 h-[2px] bg-cyan-500/0 group-hover/insert:bg-cyan-500/50 transition-colors" />
-                                              <div className="absolute opacity-0 scale-90 group-hover/insert:opacity-100 group-hover/insert:scale-100 transition-all flex gap-1 bg-[#111] p-1 border border-cyan-500/50 rounded-lg shadow-xl z-50">
-                                                <button onClick={() => handlePdfManagerInsertBlank(idx + 1)} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Blank</button>
-                                                <button onClick={() => { setInsertIndexTarget(idx + 1); insertImageInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Image</button>
-                                                <button onClick={() => { setInsertIndexTarget(idx + 1); insertDocInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Doc</button>
-                                              </div>
-                                           </div>
-                                       )}
-                                    </React.Fragment>
-                                  );
-                               })}
-                               {pdfManagerPages.length === 0 && (
-                                  <div className="text-center py-8 opacity-50 text-[10px] font-black uppercase tracking-widest text-zinc-500 border border-dashed border-white/10 rounded-xl">Document Empty</div>
-                               )}
-                            </Reorder.Group>
-                          </div>
+                                    <div className="flex gap-0.5 opacity-50 hover:opacity-100 transition-opacity">
+                                      <button onClick={(e) => handlePdfManagerDuplicate(p, e)} className="p-1.5 hover:bg-white/10 rounded-md text-zinc-400 hover:text-white transition-colors"><CopyPlus className="w-3.5 h-3.5" /></button>
+                                      <button onClick={(e) => handlePdfManagerDelete(p.id, e)} className="p-1.5 hover:bg-red-500/20 rounded-md text-zinc-400 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                  </Reorder.Item>
+
+                                  {/* Final Gap at very end */}
+                                  {idx === pdfManagerPages.length - 1 && (
+                                    <div className="h-4 mt-1 relative z-10 group/insert cursor-pointer flex items-center justify-center">
+                                      <div className="absolute inset-x-0 h-[2px] bg-cyan-500/0 group-hover/insert:bg-cyan-500/50 transition-colors" />
+                                      <div className="absolute opacity-0 scale-90 group-hover/insert:opacity-100 group-hover/insert:scale-100 transition-all flex gap-1 bg-[#111] p-1 border border-cyan-500/50 rounded-lg shadow-xl z-50">
+                                        <button onClick={() => handlePdfManagerInsertBlank(idx + 1)} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Blank</button>
+                                        <button onClick={() => { setInsertIndexTarget(idx + 1); insertImageInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Image</button>
+                                        <button onClick={() => { setInsertIndexTarget(idx + 1); insertDocInputRef.current?.click(); }} className="p-1.5 hover:bg-white/10 rounded text-[8px] font-bold uppercase tracking-wider text-zinc-300">Doc</button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                            {pdfManagerPages.length === 0 && (
+                              <div className="text-center py-8 opacity-50 text-[10px] font-black uppercase tracking-widest text-zinc-500 border border-dashed border-white/10 rounded-xl">Document Empty</div>
+                            )}
+                          </Reorder.Group>
                         </div>
+                      </div>
 
-                        {/* Hidden Inputs for tree insertions */}
-                        <input ref={insertImageInputRef} type="file" accept="image/*" className="hidden" onChange={handlePdfManagerInsertImage} />
-                        <input ref={insertDocInputRef} type="file" accept="application/pdf" className="hidden" onChange={handlePdfManagerInsertDoc} />
-                     </div>
+                      {/* Hidden Inputs for tree insertions */}
+                      <input ref={insertImageInputRef} type="file" accept="image/*" className="hidden" onChange={handlePdfManagerInsertImage} />
+                      <input ref={insertDocInputRef} type="file" accept="application/pdf" className="hidden" onChange={handlePdfManagerInsertDoc} />
+                    </div>
                   )}
 
                   {/* ── AUTO SUBTITLE PANEL ── */}
@@ -1847,10 +1847,10 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                     const isUnsupported = !['pdf', 'docx', 'pptx', 'xlsx'].includes(ext);
 
                     const FORMAT_META: Record<string, { label: string; sub: string; color: string; bg: string }> = {
-                      pdf:  { label: 'PDF',        sub: 'Document',     color: 'text-red-400',    bg: 'bg-red-500/10'    },
-                      docx: { label: 'Word',       sub: '.docx',        color: 'text-blue-400',   bg: 'bg-blue-500/10'   },
-                      xlsx: { label: 'Excel',      sub: '.xlsx',        color: 'text-emerald-400',bg: 'bg-emerald-500/10'},
-                      pptx: { label: 'PowerPoint', sub: '.pptx',        color: 'text-orange-400', bg: 'bg-orange-500/10' },
+                      pdf: { label: 'PDF', sub: 'Document', color: 'text-red-400', bg: 'bg-red-500/10' },
+                      docx: { label: 'Word', sub: '.docx', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                      xlsx: { label: 'Excel', sub: '.xlsx', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                      pptx: { label: 'PowerPoint', sub: '.pptx', color: 'text-orange-400', bg: 'bg-orange-500/10' },
                     };
 
                     const srcMeta = FORMAT_META[ext] || { label: ext.toUpperCase(), sub: 'Unknown', color: 'text-zinc-400', bg: 'bg-white/5' };
@@ -1887,11 +1887,10 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                                   <button
                                     key={fmt}
                                     onClick={() => setOptions({ ...options, format: fmt })}
-                                    className={`py-4 px-2 border rounded-xl text-center flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                                      isSelected
-                                        ? `${meta.bg} border-current ${meta.color} shadow-[0_0_12px_rgba(0,0,0,0.3)]`
-                                        : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:border-white/20'
-                                    }`}
+                                    className={`py-4 px-2 border rounded-xl text-center flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${isSelected
+                                      ? `${meta.bg} border-current ${meta.color} shadow-[0_0_12px_rgba(0,0,0,0.3)]`
+                                      : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:border-white/20'
+                                      }`}
                                   >
                                     <FileType className={`w-4 h-4 ${isSelected ? meta.color : 'text-zinc-500'}`} />
                                     <span className={`text-[11px] font-black leading-none ${isSelected ? meta.color : ''}`}>{meta.label}</span>
@@ -1939,39 +1938,39 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                       </div>
 
                       {(!options.frameMode || options.frameMode === 'single') ? (
-                         <div className="space-y-4">
-                            <p className="text-[10px] text-zinc-400 leading-relaxed">Scrub through the video player on the right, pause at the exact moment you want to capture, and click extract.</p>
-                            <button onClick={handleExtractSingleFrame} className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-cyan-400 transition-all flex items-center justify-center gap-2">
-                              <ImageIcon className="w-4 h-4" /> Extract Current Frame
-                            </button>
-                         </div>
+                        <div className="space-y-4">
+                          <p className="text-[10px] text-zinc-400 leading-relaxed">Scrub through the video player on the right, pause at the exact moment you want to capture, and click extract.</p>
+                          <button onClick={handleExtractSingleFrame} className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-cyan-400 transition-all flex items-center justify-center gap-2">
+                            <ImageIcon className="w-4 h-4" /> Extract Current Frame
+                          </button>
+                        </div>
                       ) : (
-                         <div className="space-y-4">
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Number of Frames</label>
+                            <input type="number" min="2" max="100" placeholder="10" value={options.frameCount || ''} onChange={(e) => setOptions({ ...options, frameCount: parseInt(e.target.value) })} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Number of Frames</label>
-                              <input type="number" min="2" max="100" placeholder="10" value={options.frameCount || ''} onChange={(e) => setOptions({...options, frameCount: parseInt(e.target.value)})} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all" />
+                              <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Start Time (s)</label>
+                              <div className="flex gap-2">
+                                <input type="number" step="0.1" value={options.startTime ?? 0} onChange={(e) => setOptions({ ...options, startTime: parseFloat(e.target.value) })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all" />
+                                <button onClick={() => setOptions({ ...options, startTime: currentTime })} className="px-2 bg-white/10 rounded-lg hover:bg-white/20 text-[10px] font-bold text-zinc-300 transition-colors">Set</button>
+                              </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Start Time (s)</label>
-                                 <div className="flex gap-2">
-                                   <input type="number" step="0.1" value={options.startTime ?? 0} onChange={(e) => setOptions({...options, startTime: parseFloat(e.target.value)})} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all" />
-                                   <button onClick={() => setOptions({...options, startTime: currentTime})} className="px-2 bg-white/10 rounded-lg hover:bg-white/20 text-[10px] font-bold text-zinc-300 transition-colors">Set</button>
-                                 </div>
-                               </div>
-                               <div className="space-y-2">
-                                 <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">End Time (s)</label>
-                                 <div className="flex gap-2">
-                                   <input type="number" step="0.1" value={options.endTime ?? (videoRef.current?.duration || 0).toFixed(1)} onChange={(e) => setOptions({...options, endTime: parseFloat(e.target.value)})} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all" />
-                                   <button onClick={() => setOptions({...options, endTime: currentTime})} className="px-2 bg-white/10 rounded-lg hover:bg-white/20 text-[10px] font-bold text-zinc-300 transition-colors">Set</button>
-                                 </div>
-                               </div>
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">End Time (s)</label>
+                              <div className="flex gap-2">
+                                <input type="number" step="0.1" value={options.endTime ?? (videoRef.current?.duration || 0).toFixed(1)} onChange={(e) => setOptions({ ...options, endTime: parseFloat(e.target.value) })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all" />
+                                <button onClick={() => setOptions({ ...options, endTime: currentTime })} className="px-2 bg-white/10 rounded-lg hover:bg-white/20 text-[10px] font-bold text-zinc-300 transition-colors">Set</button>
+                              </div>
                             </div>
-                            <button disabled={processing} onClick={() => { setOptions({...options, format: 'zip'}); handleProcess(); }} className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-cyan-400 transition-all disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2">
-                              {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />} 
-                              {processing ? 'Extracting...' : `Extract ${options.frameCount || 10} Frames`}
-                            </button>
-                         </div>
+                          </div>
+                          <button disabled={processing} onClick={() => { setOptions({ ...options, format: 'zip' }); handleProcess(); }} className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-cyan-400 transition-all disabled:opacity-30 disabled:grayscale flex items-center justify-center gap-2">
+                            {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+                            {processing ? 'Extracting...' : `Extract ${options.frameCount || 10} Frames`}
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -2092,16 +2091,15 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                   {isSplitter && (
                     <div className="space-y-6">
                       {!file && (
-                        <div 
-                          onClick={() => fileInputRef.current?.click()} 
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
                           onDragOver={handleDragOver}
                           onDragLeave={handleDragLeave}
                           onDrop={handleDrop}
-                          className={`w-full aspect-[4/1] border rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer group transition-all ${
-                            isDragging 
-                              ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]' 
-                              : 'border-white/5 bg-white/[0.01] hover:bg-white/5'
-                          }`}
+                          className={`w-full aspect-[4/1] border rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer group transition-all ${isDragging
+                            ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]'
+                            : 'border-white/5 bg-white/[0.01] hover:bg-white/5'
+                            }`}
                         >
                           <Upload className="w-5 h-5 text-zinc-500 group-hover:text-cyan-400 transition-colors" />
                           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 group-hover:text-cyan-400 transition-colors">
@@ -2216,21 +2214,21 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                       <div className="space-y-3">
                         <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Background Color</p>
                         <div className="grid grid-cols-6 gap-2">
-                          {['transparent', '#ffffff','#000000','#f87171','#60a5fa','#34d399','#fbbf24','#a78bfa','#f472b6','#fb923c','#94a3b8','#1e293b'].map((c) => {
+                          {['transparent', '#ffffff', '#000000', '#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#f472b6', '#fb923c', '#94a3b8', '#1e293b'].map((c) => {
                             const isTransparent = c === 'transparent';
                             const isActive = isTransparent ? (!selectedBgColor && !customBgUrl) : (selectedBgColor === c);
-                            
+
                             return (
                               <button
                                 key={c}
-                                onClick={() => { 
-                                  setSelectedBgColor(isTransparent ? null : (selectedBgColor === c ? null : c)); 
-                                  setCustomBgUrl(null); 
+                                onClick={() => {
+                                  setSelectedBgColor(isTransparent ? null : (selectedBgColor === c ? null : c));
+                                  setCustomBgUrl(null);
                                 }}
                                 className="w-full aspect-square rounded-lg border-2 transition-all relative overflow-hidden flex items-center justify-center bg-white/5"
-                                style={{ 
-                                  backgroundColor: isTransparent ? 'transparent' : c, 
-                                  borderColor: isActive ? '#22d3ee' : 'transparent', 
+                                style={{
+                                  backgroundColor: isTransparent ? 'transparent' : c,
+                                  borderColor: isActive ? '#22d3ee' : 'transparent',
                                   boxShadow: isActive ? '0 0 0 2px rgba(6,182,212,0.4)' : 'none',
                                   ...(isTransparent && {
                                     backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05)), repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.05))',
@@ -2292,7 +2290,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
 
         {/* ── MAIN PREVIEW AREA ── */}
         {!isSplitter && (
-          <main className={`flex-1 relative flex flex-col items-center justify-center ${isPdfTool ? 'p-4' : 'p-8'} bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.02)_0%,_transparent_70%)]`}>
+          <main className={`ws-main flex-1 relative flex flex-col items-center justify-center ${isPdfTool ? 'p-2 md:p-4' : 'p-3 md:p-8'} bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.02)_0%,_transparent_70%)]`}>
 
             {isTTS ? (
               <div className="w-full h-full flex flex-col items-center justify-center max-w-4xl">
@@ -2303,7 +2301,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                       <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Script Input</span>
                       <span className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">{textInput.length} chars</span>
                     </div>
-                    <textarea value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Type something here to convert to speech..." className="w-full h-[400px] bg-transparent text-xl font-medium text-white placeholder:text-zinc-700 focus:outline-none resize-none custom-scrollbar" />
+                    <textarea value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Type something here to convert to speech..." className="ws-tts-textarea w-full h-[200px] md:h-[400px] bg-transparent text-base md:text-xl font-medium text-white placeholder:text-zinc-700 focus:outline-none resize-none custom-scrollbar" />
                   </div>
                 </div>
               </div>
@@ -2317,14 +2315,13 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     whileHover={{ scale: 1.01, borderColor: 'rgba(6,182,212,0.4)', backgroundColor: 'rgba(255,255,255,0.02)' }}
-                    className={`w-full py-16 border rounded-[2.5rem] flex flex-col items-center justify-center gap-5 cursor-pointer group transition-all duration-500 shadow-2xl relative overflow-hidden ${
-                      isDragging 
-                        ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]' 
-                        : 'border-white/5 bg-white/[0.01]'
-                    }`}
+                    className={`ws-dropzone w-full py-8 md:py-16 border rounded-[1.5rem] md:rounded-[2.5rem] flex flex-col items-center justify-center gap-3 md:gap-5 cursor-pointer group transition-all duration-500 shadow-2xl relative overflow-hidden ${isDragging
+                      ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]'
+                      : 'border-white/5 bg-white/[0.01]'
+                      }`}
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-                      {isPdfMultiInput ? <Layers className="w-8 h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" /> : <Upload className="w-8 h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" />}
+                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 pointer-events-none">
+                      {isPdfMultiInput ? <Layers className="w-6 h-6 md:w-8 md:h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" /> : <Upload className="w-6 h-6 md:w-8 md:h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" />}
                     </div>
                     <div className="text-center space-y-1.5 pointer-events-none">
                       <p className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400 group-hover:text-cyan-400 transition-colors">
@@ -2349,33 +2346,33 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                   {/* URL INPUT BAR */}
                   {tool.category === 'image' && (
                     <form onSubmit={handleUrlSubmit} className="w-full max-w-xl relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                        <div className="relative flex items-center bg-black/40 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl focus-within:border-cyan-500/50 focus-within:bg-black/60 transition-all shadow-xl">
-                            <input 
-                              type="url" 
-                              placeholder="Paste image URL here..." 
-                              value={imageUrlInput} 
-                              onChange={(e) => {
-                                setImageUrlInput(e.target.value);
-                                setUrlError(null);
-                              }}
-                              className="flex-1 bg-transparent px-6 py-4 text-sm font-medium text-white placeholder:text-zinc-600 focus:outline-none"
-                            />
-                            <div className="pr-2">
-                              <button 
-                                type="submit" 
-                                disabled={!imageUrlInput || isFetchingUrl}
-                                className="px-6 py-2.5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-cyan-400 transition-all disabled:opacity-20 flex items-center justify-center min-w-[110px] gap-2"
-                              >
-                                {isFetchingUrl ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : 'Load URL'}
-                              </button>
-                            </div>
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                      <div className="relative flex items-center bg-black/40 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl focus-within:border-cyan-500/50 focus-within:bg-black/60 transition-all shadow-xl">
+                        <input
+                          type="url"
+                          placeholder="Paste image URL here..."
+                          value={imageUrlInput}
+                          onChange={(e) => {
+                            setImageUrlInput(e.target.value);
+                            setUrlError(null);
+                          }}
+                          className="flex-1 bg-transparent px-6 py-4 text-sm font-medium text-white placeholder:text-zinc-600 focus:outline-none"
+                        />
+                        <div className="pr-2">
+                          <button
+                            type="submit"
+                            disabled={!imageUrlInput || isFetchingUrl}
+                            className="px-6 py-2.5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-cyan-400 transition-all disabled:opacity-20 flex items-center justify-center min-w-[110px] gap-2"
+                          >
+                            {isFetchingUrl ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : 'Load URL'}
+                          </button>
                         </div>
-                        {urlError && (
-                          <p className="absolute -bottom-7 left-0 w-full text-center text-[10px] text-red-400 font-bold uppercase tracking-widest bg-black/50 py-1 rounded-lg">
-                            {urlError}
-                          </p>
-                        )}
+                      </div>
+                      {urlError && (
+                        <p className="absolute -bottom-7 left-0 w-full text-center text-[10px] text-red-400 font-bold uppercase tracking-widest bg-black/50 py-1 rounded-lg">
+                          {urlError}
+                        </p>
+                      )}
                     </form>
                   )}
                 </div>
@@ -2407,7 +2404,7 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                               <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Input</span>
                               <span className="text-xs font-bold">{formatBytes(file.size)}</span>
                               <span className="text-zinc-700">·</span>
-                              <span className="text-xs font-bold uppercase text-zinc-400">{(file.type.split('/')[1]?.replace('jpeg','jpg') || file.name.split('.').pop() || '—').toUpperCase()}</span>
+                              <span className="text-xs font-bold uppercase text-zinc-400">{(file.type.split('/')[1]?.replace('jpeg', 'jpg') || file.name.split('.').pop() || '—').toUpperCase()}</span>
                             </div>
                             {resultUrl && resultSize != null && (
                               <div className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-center gap-3">
@@ -2466,45 +2463,45 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
 
                       {/* ── PDF MANAGER INDIVIDUAL PAGE RENDER ── */}
                       {isPdfManager && activePageNode ? (
-                         <div className="w-full h-full flex flex-col relative">
-                            {/* Active Page Preview Canvas */}
-                            <div className="flex-1 p-6 flex items-center justify-center bg-zinc-900/80 overflow-hidden checker-bg">
-                               {activePageNode.sourceType === 'blank' ? (
-                                 <div className="bg-white shadow-2xl" style={{width: '60%', height: '80%', transform: `rotate(${activePageNode.rotation}deg)`, transition: 'transform 0.3s ease'}} />
-                               ) : (
-                                 <PdfSinglePageCanvas
-                                   key={activePageNode.id} 
-                                   srcFile={null}
-                                   pageIndex={activePageNode.originalIndex}
-                                   rotation={activePageNode.rotation}
-                                   fileObject={activePageNode.sourceType === 'main' ? (file ?? undefined) : activePageNode.file}
-                                   sourceUrl={activePageNode.sourceUrl}
-                                 />
-                               )}
-                            </div>
-                            
-                            {/* Page Controls Toolbar */}
-                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-white/10 p-2 rounded-2xl flex gap-2 shadow-2xl">
-                               <button onClick={() => handlePdfManagerRotate('ccw')} className="px-4 py-2 hover:bg-white/10 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-colors">
-                                  <RotateCcw className="w-4 h-4" /> Rotate Left
-                               </button>
-                               <div className="w-px bg-white/10 mx-1"></div>
-                               <button onClick={() => handlePdfManagerRotate('cw')} className="px-4 py-2 hover:bg-white/10 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-colors">
-                                  Rotate Right <RotateCw className="w-4 h-4" />
-                               </button>
-                               <div className="w-px bg-white/10 mx-1"></div>
-                               <button onClick={() => handlePdfManagerExtract(activePageNode)} className="px-4 py-2 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-colors">
-                                  <ArrowUpRight className="w-4 h-4" /> Extract Single
-                               </button>
-                            </div>
-                         </div>
+                        <div className="w-full h-full flex flex-col relative">
+                          {/* Active Page Preview Canvas */}
+                          <div className="flex-1 p-6 flex items-center justify-center bg-zinc-900/80 overflow-hidden checker-bg">
+                            {activePageNode.sourceType === 'blank' ? (
+                              <div className="bg-white shadow-2xl" style={{ width: '60%', height: '80%', transform: `rotate(${activePageNode.rotation}deg)`, transition: 'transform 0.3s ease' }} />
+                            ) : (
+                              <PdfSinglePageCanvas
+                                key={activePageNode.id}
+                                srcFile={null}
+                                pageIndex={activePageNode.originalIndex}
+                                rotation={activePageNode.rotation}
+                                fileObject={activePageNode.sourceType === 'main' ? (file ?? undefined) : activePageNode.file}
+                                sourceUrl={activePageNode.sourceUrl}
+                              />
+                            )}
+                          </div>
+
+                          {/* Page Controls Toolbar */}
+                          <div className="ws-page-toolbar absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-white/10 p-1.5 md:p-2 rounded-xl md:rounded-2xl flex flex-wrap justify-center gap-1 md:gap-2 shadow-2xl max-w-[calc(100%-24px)]">
+                            <button onClick={() => handlePdfManagerRotate('ccw')} className="px-2 md:px-4 py-1.5 md:py-2 hover:bg-white/10 rounded-lg md:rounded-xl flex items-center gap-1 md:gap-2 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-colors">
+                              <RotateCcw className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Rotate </span>Left
+                            </button>
+                            <div className="w-px bg-white/10 hidden md:block"></div>
+                            <button onClick={() => handlePdfManagerRotate('cw')} className="px-2 md:px-4 py-1.5 md:py-2 hover:bg-white/10 rounded-lg md:rounded-xl flex items-center gap-1 md:gap-2 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-colors">
+                              <span className="hidden sm:inline">Rotate </span>Right <RotateCw className="w-3 h-3 md:w-4 md:h-4" />
+                            </button>
+                            <div className="w-px bg-white/10 hidden md:block"></div>
+                            <button onClick={() => handlePdfManagerExtract(activePageNode)} className="px-2 md:px-4 py-1.5 md:py-2 hover:bg-cyan-500/20 hover:text-cyan-400 rounded-lg md:rounded-xl flex items-center gap-1 md:gap-2 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-zinc-300 transition-colors">
+                              <ArrowUpRight className="w-3 h-3 md:w-4 md:h-4" /> Extract
+                            </button>
+                          </div>
+                        </div>
                       ) : tool.category === 'audio' || resultUrl?.endsWith('.mp3') || resultUrl?.endsWith('.wav') ? (
-                        <div className="bg-white/5 p-12 rounded-3xl border border-white/10 w-3/4 text-center">
+                        <div className="ws-audio-box bg-white/5 p-6 md:p-12 rounded-2xl md:rounded-3xl border border-white/10 w-full md:w-3/4 text-center">
                           <audio src={resultUrl || previewUrl!} controls className="w-full" />
                         </div>
                       ) : (
                         (displayAsPdf || (!isImage && !resultUrl?.endsWith('.png') && !resultUrl?.endsWith('.jpg') && options.format !== 'zip' && options.format !== 'png')) ? (
-                          <div className={isPdfTool ? 'relative h-[85vh] aspect-[1/1.414] max-w-full rounded-2xl overflow-hidden bg-white shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10' : 'relative w-full h-full flex items-center justify-center'}>
+                          <div className={isPdfTool ? 'ws-pdf-canvas relative h-[50vh] md:h-[85vh] aspect-[1/1.414] max-w-full rounded-2xl overflow-hidden bg-white shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10' : 'relative w-full h-full flex items-center justify-center'}>
                             {displayAsPdf ? (
                               isPdfRemovePage && !resultUrl ? (
                                 <iframe
@@ -2573,20 +2570,20 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                                   backgroundSize: '20px 20px',
                                 } : undefined}
                               >
-                              <video
-                                ref={videoRef}
-                                src={resultUrl || previewUrl!}
-                                controls={!processing}
-                                onPlay={() => setIsVideoStarted(true)}
-                                onSeeked={() => { if (videoRef.current) setCurrentTime(videoRef.current.currentTime); }}
-                                onTimeUpdate={() => {
-                                  if (videoRef.current) {
-                                    setCurrentTime(videoRef.current.currentTime);
-                                    if (videoRef.current.currentTime > 0) setIsVideoStarted(true);
-                                  }
-                                }}
-                                className="max-h-full w-full object-contain"
-                              />
+                                <video
+                                  ref={videoRef}
+                                  src={resultUrl || previewUrl!}
+                                  controls={!processing}
+                                  onPlay={() => setIsVideoStarted(true)}
+                                  onSeeked={() => { if (videoRef.current) setCurrentTime(videoRef.current.currentTime); }}
+                                  onTimeUpdate={() => {
+                                    if (videoRef.current) {
+                                      setCurrentTime(videoRef.current.currentTime);
+                                      if (videoRef.current.currentTime > 0) setIsVideoStarted(true);
+                                    }
+                                  }}
+                                  className="max-h-full w-full object-contain"
+                                />
                               </div>
                             )}
 
@@ -2611,21 +2608,21 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
                         ) : (
                           <div className="relative w-full h-full flex items-center justify-center flex-col gap-6">
                             {options.format === 'zip' ? (
-                               <div className="flex flex-col items-center justify-center h-full w-full text-zinc-500 bg-white/5 rounded-2xl border border-white/10 p-8">
-                                 <div className="flex flex-col items-center gap-6 w-full max-w-sm">
-                                   <div className="w-20 h-20 rounded-3xl border-2 flex items-center justify-center bg-purple-500/10 border-purple-500/30">
-                                     <FileArchive className="w-9 h-9 text-purple-400" />
-                                   </div>
-                                   <div className="text-center space-y-1">
-                                     <p className="text-xl font-black uppercase tracking-wide text-purple-400">Archive Ready</p>
-                                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                       {options.frameCount} Frames Extracted
-                                     </p>
-                                   </div>
-                                 </div>
-                               </div>
+                              <div className="flex flex-col items-center justify-center h-full w-full text-zinc-500 bg-white/5 rounded-2xl border border-white/10 p-8">
+                                <div className="flex flex-col items-center gap-6 w-full max-w-sm">
+                                  <div className="w-20 h-20 rounded-3xl border-2 flex items-center justify-center bg-purple-500/10 border-purple-500/30">
+                                    <FileArchive className="w-9 h-9 text-purple-400" />
+                                  </div>
+                                  <div className="text-center space-y-1">
+                                    <p className="text-xl font-black uppercase tracking-wide text-purple-400">Archive Ready</p>
+                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                      {options.frameCount} Frames Extracted
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
                             ) : (
-                              <img src={isPaletteGenerator ? previewUrl! : (isRemoveBg ? (compositeUrl || resultUrl || previewUrl!) : (resultUrl || previewUrl!))} alt="Preview" className={isPdfTool ? 'h-[85vh] aspect-[1/1.414] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10' : 'max-h-full object-contain'} />
+                              <img src={isPaletteGenerator ? previewUrl! : (isRemoveBg ? (compositeUrl || resultUrl || previewUrl!) : (resultUrl || previewUrl!))} alt="Preview" className={isPdfTool ? 'h-[50vh] md:h-[85vh] aspect-[1/1.414] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10' : 'max-h-full max-w-full object-contain'} />
                             )}
                           </div>
                         )
