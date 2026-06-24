@@ -818,7 +818,7 @@ function Dashboard({ activeTab, setActiveTab, selectedTool, setSelectedTool, pro
                     </div>
                   ) : processor ? (
                     <UniversalWorkspace key={selectedTool.id} tool={selectedTool}
-                      onProcess={async (file: File, opts: any) => {
+                      onProcess={async (file: File | File[], opts: any) => {
                         if (typeof processor.process === 'function') return await processor.process(file, opts);
                         if (typeof processor === 'function') return await processor(file, opts);
                         throw new Error('Invalid processor');

@@ -581,9 +581,7 @@ export class CanvasHelper {
    * Clean up resources
    */
   static cleanup(): void {
-    if (this.canvas) {
-      this.canvas.width = 0;
-      this.canvas.height = 0;
-    }
+    // Static canvas has been removed to prevent race conditions.
+    // Cleanup is now handled automatically via garbage collection.
   }
 }

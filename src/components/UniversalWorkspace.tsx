@@ -10,7 +10,8 @@ import {
   FileText, Square, RotateCw, ArrowUpRight, CopyPlus
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { ProcessorFunction, ToolMetadata } from '@/types/processor';
+import { ProcessorFunction } from '@/types/processor';
+import { ToolMetadata } from '@/lib/toolRegistry';
 
 // ---------------------------------------------------------------------------
 // UTILITY: parse "1, 3, 5-10" (1-indexed UI labels) → sorted 0-indexed array

@@ -165,7 +165,7 @@ export class FFmpegHelper {
       const data = await ff.readFile(outputFilename);
       
       const mimeType = outputFilename.endsWith('mp4') ? 'video/mp4' : 'audio/mpeg';
-      return new Blob([data as Uint8Array], { type: mimeType });
+      return new Blob([data as any], { type: mimeType });
     } finally {
       try { await ff.deleteFile(inputName); } catch { /* may not exist */ }
       try { await ff.deleteFile(outputFilename); } catch { /* may not exist */ }

@@ -22,13 +22,13 @@ export const bgRemoverProcessor = {
     }
 
     // ⚡ Dynamically import the background removal module
-    const module: any = await import('@imgly/background-removal');
+    const imglyModule: any = await import('@imgly/background-removal');
 
     // 🔍 Find the function (handles both default and named exports)
-    const removeBackground = module.default || module.removeBackground || module;
+    const removeBackground = imglyModule.default || imglyModule.removeBackground || imglyModule;
 
     if (typeof removeBackground !== 'function') {
-      console.error("Imported Module:", module);
+      console.error("Imported Module:", imglyModule);
       throw new Error("Background removal engine failed to load correctly.");
     }
 

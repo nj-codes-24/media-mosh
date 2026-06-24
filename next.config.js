@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // 1. Stability Settings
-  reactStrictMode: false,
-  output: undefined,
+  reactStrictMode: true,
 
   // 2. REQUIRED HEADERS: Keeps FFmpeg, WebCodecs, and AI tools working
   async headers() {

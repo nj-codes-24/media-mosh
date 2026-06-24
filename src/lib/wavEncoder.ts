@@ -70,7 +70,7 @@ export function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
   const data = buffer.getChannelData(0);
   const pcm = float32ToPcm16(data);
   const header = createWavHeader(buffer.sampleRate, 1, pcm.byteLength);
-  return new Blob([header, pcm], { type: 'audio/wav' });
+  return new Blob([header, pcm as any], { type: 'audio/wav' });
 }
 
 /**
@@ -83,5 +83,5 @@ export function samplesToWavFile(
 ): File {
   const pcm = float32ToPcm16(samples);
   const header = createWavHeader(sampleRate, 1, pcm.byteLength);
-  return new File([header, pcm], filename, { type: 'audio/wav' });
+  return new File([header, pcm as any], filename, { type: 'audio/wav' });
 }

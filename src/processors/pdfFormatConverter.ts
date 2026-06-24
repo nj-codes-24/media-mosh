@@ -27,9 +27,7 @@ const xmlEsc = (s: string): string =>
  * Load JSZip safely regardless of whether the bundler exposes it as
  * module.default (ESM interop) or directly as the module (CJS).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loadJSZip(): Promise<any> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mod = (await import('jszip')) as any;
   return typeof mod.default === 'function' ? mod.default : mod;
 }
@@ -40,15 +38,12 @@ async function extractTextFromPdf(file: File): Promise<string[]> {
   const pdfjsLib = await loadPdfjs();
 
   const data = await file.arrayBuffer();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdf: any = await pdfjsLib.getDocument({ data }).promise;
 
   const lines: string[] = [];
   
   for (let i = 1; i <= (pdf.numPages as number); i++) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const page: any = await pdf.getPage(i);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const content: any = await page.getTextContent();
     
     // Group text items by Y coordinate to reconstruct proper lines
@@ -90,20 +85,17 @@ function extractXmlText(xml: string): string {
 
 async function extractTextFromOffice(file: File): Promise<string[]> {
   const JSZip = await loadJSZip();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const zip: any = await JSZip.loadAsync(await file.arrayBuffer());
   const ext = (file.name.split('.').pop() ?? '').toLowerCase();
   const nodes: string[] = [];
 
   if (ext === 'docx') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const raw: string = (await (zip.file('word/document.xml') as any)?.async('text')) ?? '';
     for (const p of raw.split(/<w:p[ >]/)) {
       const t = extractXmlText(p).trim();
       if (t) nodes.push(t);
     }
   } else if (ext === 'xlsx') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sharedRaw: string =
       (await (zip.file('xl/sharedStrings.xml') as any)?.async('text')) ?? '';
     const sharedStrings: string[] = [];
@@ -112,12 +104,10 @@ async function extractTextFromOffice(file: File): Promise<string[]> {
       if (t) sharedStrings.push(t);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sheetKeys = Object.keys(zip.files as Record<string, any>).filter((k) =>
       /xl\/worksheets\/sheet\d+\.xml/.test(k),
     );
     for (const sf of sheetKeys) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sheetRaw: string = (await (zip.file(sf) as any)?.async('text')) ?? '';
       for (const row of sheetRaw.match(/<row[^>]*>[\s\S]*?<\/row>/g) ?? []) {
         const vals: string[] = (row.match(/<c[^>]*>[\s\S]*?<\/c>/g) ?? [])
@@ -134,12 +124,10 @@ async function extractTextFromOffice(file: File): Promise<string[]> {
       }
     }
   } else if (ext === 'pptx') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const slideKeys = Object.keys(zip.files as Record<string, any>)
       .filter((k) => /ppt\/slides\/slide\d+\.xml/.test(k) && !k.includes('_rels'))
       .sort();
     for (const sf of slideKeys) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const raw: string = (await (zip.file(sf) as any)?.async('text')) ?? '';
       for (const p of raw.split(/<a:p[ >]/)) {
         const t = extractXmlText(p).trim();
@@ -167,7 +155,6 @@ async function createPdf(lines: string[], sourceFileName: string): Promise<Blob>
   const MAX_W = PAGE_W - MARGIN * 2;
   const docTitle = sourceFileName.replace(/\.[^.]+$/, '');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let currentPage: any = doc.addPage([PAGE_W, PAGE_H]);
   let y = PAGE_H - MARGIN;
 
@@ -176,7 +163,6 @@ async function createPdf(lines: string[], sourceFileName: string): Promise<Blob>
     y = PAGE_H - MARGIN;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const wrap = (text: string, size: number, font: any): string[] => {
     const words = text.split(' ');
     const out: string[] = [];
@@ -219,7 +205,6 @@ async function createPdf(lines: string[], sourceFileName: string): Promise<Blob>
 
 async function createDocx(lines: string[], sourceFileName: string): Promise<Blob> {
   const JSZip = await loadJSZip();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const zip: any = new JSZip();
   const docTitle = sourceFileName.replace(/\.[^.]+$/, '');
 
@@ -289,7 +274,6 @@ async function createDocx(lines: string[], sourceFileName: string): Promise<Blob
 
 async function createXlsx(lines: string[], sourceFileName: string): Promise<Blob> {
   const JSZip = await loadJSZip();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const zip: any = new JSZip();
   const docTitle = sourceFileName.replace(/\.[^.]+$/, '');
 
@@ -425,7 +409,6 @@ ${strList.map((s) => `  <si><t xml:space="preserve">${xmlEsc(s)}</t></si>`).join
 
 async function createPptx(lines: string[], sourceFileName: string): Promise<Blob> {
   const JSZip = await loadJSZip();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const zip: any = new JSZip();
   const docTitle = sourceFileName.replace(/\.[^.]+$/, '');
   const PER_SLIDE = 8;
@@ -728,7 +711,6 @@ ${slideOverrides}
 
 /* ─── public API ─────────────────────────────────────────────────────────────*/
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const pdfFormatConverter = async (file: File, options: any): Promise<Blob> => {
   const targetFormat: string = ((options?.format as string | undefined) ?? 'pdf').toLowerCase();
   const sourceExt: string = (file.name.split('.').pop() ?? '').toLowerCase();

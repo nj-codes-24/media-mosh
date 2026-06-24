@@ -35,7 +35,7 @@ export const frameExtractor = async (file: File, options: any) => {
 
     const data = await ffmpeg.readFile(outputName);
     
-    const blob = new Blob([data as Uint8Array], { type: 'image/png' });
+    const blob = new Blob([data as any], { type: 'image/png' });
     
     folder?.file(outputName, blob);
     
