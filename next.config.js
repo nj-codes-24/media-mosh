@@ -1,72 +1,88 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 1. Stability Settings
+  // ─── 1. Build & Caching Optimization (Vercel) ───
   reactStrictMode: true,
+  swcMinify: true,
+  productionBrowserSourceMaps: false, // Prevents memory bloat during Vercel builds
 
-  // 2. REQUIRED HEADERS: Keeps FFmpeg, WebCodecs, and AI tools working
+  // Exclude heavy WASM and Node binaries from the serverless function trace.
+  // Since this app processes everything on the client, the backend API
+  // does not need to bundle FFmpeg or ONNX Node binaries, preventing the 50MB Vercel limit.
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/onnxruntime-node/**/*',
+      'node_modules/@ffmpeg/core*/**/*',
+      'node_modules/@imgly/**/*',
+    ],
+  },
+
+  // ─── 2. Cross-Origin Headers for SharedArrayBuffer (FFmpeg Multi-threading) ───
   async headers() {
     return [
       {
+        // Apply these headers to all routes
         source: '/:path*',
         headers: [
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
+          // 'require-corp' is strictly required by Safari & Firefox for SharedArrayBuffer.
+          // 'credentialless' works in Chromium, but breaks across other engines.
+          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
         ],
       },
+      {
+        // Cache heavy static assets (Models, WASM) for a full year
+        source: '/models/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/pdfjs/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      }
     ];
   },
 
+  // ─── 3. Webpack overrides for WASM & ONNX ───
   webpack: (config, { isServer }) => {
-    // ─── VERCEL BUILD FIX (Fixes Terser import.meta crash in ONNX WebGPU) ───
-    config.module.rules.push({
-      test: /\.m?js$/,
-      type: "javascript/auto",
-      resolve: {
-        fullySpecified: false,
-      },
-    });
-
-    // ─── FIX: Stop Webpack from transforming URL patterns in onnxruntime-web ──
-    // onnxruntime-web uses `new URL('./file.wasm', import.meta.url)` to resolve
-    // its WASM files at runtime. Without `parser.url: false`, Webpack replaces
-    // the URL with a module object reference → "url.replace is not a function".
-    // The javascript/auto rule above is still needed for Terser compatibility.
-    config.module.rules.push({
-      test: /node_modules[\\/]onnxruntime-web/,
-      parser: {
-        url: false,
-      },
-    });
-
-    // ─── WASM Support (Required for FFmpeg & AI Processors) ─────────────────
-    // IMPORTANT: Exclude onnxruntime-web's .wasm files from the asset/resource
-    // rule. onnxruntime-web resolves its own WASM files at runtime via
-    // import.meta.url. Treating them as asset/resource causes Webpack to turn
-    // them into module objects, breaking "url.replace is not a function".
-    config.module.rules.push({
-      test: /\.wasm$/,
-      exclude: /node_modules[\\/]onnxruntime/,
-      type: 'asset/resource',
-    });
-
+    // Enable WebAssembly experiments
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
       layers: true,
     };
 
-    // ─── Web Worker Support ──────────────────────────────────────────────────
+    // VERCEL BUILD FIX: Prevents Terser from crashing on `import.meta` in ONNX WebGPU
     config.module.rules.push({
-      test: /Worker\.ts$/,
-      use: [
-        {
-          loader: 'ts-loader',
-          options: { transpileOnly: true },
-        },
-      ],
+      test: /\.m?js$/,
+      type: 'javascript/auto',
+      resolve: { fullySpecified: false },
     });
 
-    // ─── Browser / Client Build Rules ───────────────────────────────────────
+    // ONNX Runtime Resolution Fix: Stop Webpack from transforming dynamic import.meta URLs
+    config.module.rules.push({
+      test: /node_modules[\\/]onnxruntime-web/,
+      parser: { url: false },
+    });
+
+    // Native WASM Loading Rule
+    // We exclude ONNX because it fetches its own WASM files at runtime.
+    config.module.rules.push({
+      test: /\.wasm$/,
+      exclude: /node_modules[\\/]onnxruntime/,
+      type: 'asset/resource',
+    });
+
+    // Ignore .onnx model files during Webpack bundling, they are loaded statically from /public
+    config.module.rules.push({
+      test: /\.onnx$/,
+      type: 'asset/resource',
+    });
+
+    // Client-side execution fallbacks
     if (!isServer) {
       config.resolve.alias = {
         ...config.resolve.alias,
@@ -88,11 +104,11 @@ const nextConfig = {
 
       config.output = {
         ...config.output,
-        workerChunkLoading: 'import-scripts',
+        workerChunkLoading: 'import-scripts', // Required for Web Workers in Next.js
       };
     }
 
-    // ─── Server Build Rules ──────────────────────────────────────────────────
+    // Server-side exclusions
     if (isServer) {
       config.externals.push({
         sharp: 'commonjs sharp',
@@ -103,13 +119,7 @@ const nextConfig = {
       });
     }
 
-    // ─── Prevent Webpack from statically resolving dynamic AI imports ────────
-    config.module.rules.push({
-      test: /node_modules[\\/]@xenova[\\/]transformers/,
-      type: 'javascript/auto',
-    });
-
-    // Handle 'node:' protocol imports
+    // Handle 'node:' protocol imports for older packages
     config.resolve.alias = {
       ...config.resolve.alias,
       'node:path': require.resolve('path'),
