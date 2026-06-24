@@ -171,6 +171,21 @@ export class FFmpegHelper {
       try { await ff.deleteFile(outputFilename); } catch { /* may not exist */ }
     }
   }
+  /**
+   * Cleans up the FFmpeg WebAssembly worker to free memory.
+   */
+  public terminate() {
+    if (this.ffmpeg) {
+      try {
+        this.ffmpeg.terminate();
+      } catch (e) {
+        console.warn('Error terminating FFmpeg:', e);
+      }
+      this.ffmpeg = null;
+    }
+    this.loaded = false;
+    this.loadingPromise = null;
+  }
 }
 
 export const ffmpegHelper = FFmpegHelper.getInstance();

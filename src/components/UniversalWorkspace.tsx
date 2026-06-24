@@ -1,4 +1,5 @@
 'use client';
+import { loadPdfjs as getPdfjsLib } from '@/lib/pdfjsLoader';
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -9,6 +10,7 @@ import {
   FileText, Square, RotateCw, ArrowUpRight, CopyPlus
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { ProcessorFunction, ToolMetadata } from '@/types/processor';
 
 // ---------------------------------------------------------------------------
 // UTILITY: parse "1, 3, 5-10" (1-indexed UI labels) → sorted 0-indexed array
@@ -187,29 +189,6 @@ const TranscriptItem = ({
 // ---------------------------------------------------------------------------
 // SUB-COMPONENT: PDF SINGLE PAGE CANVAS
 // ---------------------------------------------------------------------------
-
-let _pdfjsPromise: Promise<any> | null = null;
-const getPdfjsLib = (): Promise<any> => {
-  if (_pdfjsPromise) return _pdfjsPromise;
-
-  _pdfjsPromise = (async () => {
-    if (typeof window !== 'undefined' && (window as any).pdfjsLib) {
-      return (window as any).pdfjsLib;
-    }
-    const pdfjsModule = await import(/* webpackIgnore: true */ '/pdfjs/pdf.mjs' as any);
-    const lib = pdfjsModule.default || pdfjsModule;
-
-    lib.GlobalWorkerOptions.workerSrc = '/pdfjs/pdf.worker.mjs';
-
-    if (typeof window !== 'undefined') {
-      (window as any).pdfjsLib = lib;
-    }
-    return lib;
-  })();
-
-  _pdfjsPromise.catch(() => { _pdfjsPromise = null; });
-  return _pdfjsPromise;
-};
 
 const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceUrl }: { srcFile: string | null; pageIndex: number; rotation: number; fileObject?: File; sourceUrl?: string; }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -484,7 +463,7 @@ const PdfCanvasViewer = ({
 // ---------------------------------------------------------------------------
 // MAIN COMPONENT
 // ---------------------------------------------------------------------------
-export default function UniversalWorkspace({ tool, onProcess }: any) {
+export default function UniversalWorkspace({ tool, onProcess }: { tool: ToolMetadata, onProcess: ProcessorFunction }) {
   // ── File & URL states ────────────────────────────────────────────────────
   const [file, setFile] = useState<File | null>(null);
   const [files, setFiles] = useState<File[]>([]);

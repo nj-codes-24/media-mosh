@@ -19,31 +19,28 @@ export interface ResizeOptions {
 }
 
 export class CanvasHelper {
-  private static canvas: HTMLCanvasElement | null = null;
-  private static ctx: CanvasRenderingContext2D | null = null;
-
   /**
-   * Get or create canvas and context
+   * Create a new canvas and context
+   * NOTE: We no longer cache a single static canvas to prevent 
+   * race conditions when multiple processors run concurrently.
    */
   private static getCanvas(): {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
   } {
-    if (!this.canvas) {
-      this.canvas = document.createElement('canvas');
-      this.ctx = this.canvas.getContext('2d', {
-        willReadFrequently: true,
-        alpha: true
-      });
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', {
+      willReadFrequently: true,
+      alpha: true
+    });
 
-      if (!this.ctx) {
-        throw new Error('Failed to get 2D context');
-      }
+    if (!ctx) {
+      throw new Error('Failed to get 2D context');
     }
 
     return {
-      canvas: this.canvas,
-      ctx: this.ctx as CanvasRenderingContext2D
+      canvas,
+      ctx
     };
   }
 

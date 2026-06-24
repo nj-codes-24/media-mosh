@@ -7,6 +7,8 @@
  * - jszip       → build / read Office Open XML packages with DEFLATE
  */
 
+import { loadPdfjs } from '@/lib/pdfjsLoader';
+
 /* ─── helpers ────────────────────────────────────────────────────────────────*/
 
 /** * Escape a string for embedding in XML character data.
@@ -35,15 +37,7 @@ async function loadJSZip(): Promise<any> {
 /* ─── text extraction ────────────────────────────────────────────────────────*/
 
 async function extractTextFromPdf(file: File): Promise<string[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawMod = (await import('pdfjs-dist')) as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfjsLib: any = rawMod.default ?? rawMod;
-
-  const version: string = pdfjsLib.version ?? '4.0.379';
-  const workerExt = version.startsWith('4') ? 'mjs' : 'js';
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.${workerExt}`;
+  const pdfjsLib = await loadPdfjs();
 
   const data = await file.arrayBuffer();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
