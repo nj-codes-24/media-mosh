@@ -3,36 +3,7 @@
  * Uses Web Audio API to decode inputs and re-encode.
  */
 
-const writeWavHeader = (sampleRate: number, numChannels: number, dataLength: number) => {
-    const buffer = new ArrayBuffer(44);
-    const view = new DataView(buffer);
-    view.setUint32(0, 0x52494646, false); // "RIFF"
-    view.setUint32(4, 36 + dataLength, true);
-    view.setUint32(8, 0x57415645, false); // "WAVE"
-    view.setUint32(12, 0x666d7420, false); // "fmt "
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * numChannels * 2, true);
-    view.setUint16(32, numChannels * 2, true);
-    view.setUint16(34, 16, true);
-    view.setUint32(36, 0x64617461, false); // "data"
-    view.setUint32(40, dataLength, true);
-    return buffer;
-};
-
-const interleave = (left: Float32Array, right: Float32Array) => {
-    const length = left.length + right.length;
-    const result = new Float32Array(length);
-    let inputIndex = 0;
-    for (let index = 0; index < length; ) {
-        result[index++] = left[inputIndex];
-        result[index++] = right[inputIndex];
-        inputIndex++;
-    }
-    return result;
-};
+import { createWavHeader, interleaveChannels } from '@/lib/wavEncoder';
 
 export const audioConverter = async (file: File, options: any): Promise<File> => {
     return new Promise(async (resolve, reject) => {
@@ -48,7 +19,7 @@ export const audioConverter = async (file: File, options: any): Promise<File> =>
                 
                 let interleaved: Float32Array;
                 if (numChannels === 2) {
-                    interleaved = interleave(audioBuffer.getChannelData(0), audioBuffer.getChannelData(1));
+                    interleaved = interleaveChannels(audioBuffer.getChannelData(0), audioBuffer.getChannelData(1));
                 } else {
                     interleaved = audioBuffer.getChannelData(0);
                 }
@@ -61,7 +32,7 @@ export const audioConverter = async (file: File, options: any): Promise<File> =>
                     view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
                 }
                 
-                const header = writeWavHeader(sampleRate, numChannels, dataLength);
+                const header = createWavHeader(sampleRate, numChannels, dataLength);
                 
                 // Mime Type logic
                 const mime = options.format === 'mp3' ? 'audio/mpeg' : 'audio/wav';

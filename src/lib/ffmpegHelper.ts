@@ -1,5 +1,5 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { toBlobURL } from '@ffmpeg/util';
+import { toBlobURL, fetchFile } from '@ffmpeg/util';
 
 export interface FFmpegProgress {
   ratio: number;
@@ -10,7 +10,8 @@ export class FFmpegHelper {
   private static instance: FFmpegHelper;
   private ffmpeg: FFmpeg | null = null;
   private loaded = false;
-  private loading = false;
+  /** Promise-based mutex — replaces the spin-wait anti-pattern. */
+  private loadingPromise: Promise<FFmpeg> | null = null;
 
   private constructor() {}
 
@@ -25,20 +26,20 @@ export class FFmpegHelper {
   }
 
   /**
-   * Initializes FFmpeg and binds the progress listener to the UI
+   * Initializes FFmpeg and binds the progress listener to the UI.
+   * Uses a promise-based mutex to avoid the spin-wait race condition.
    */
   async load(onProgress?: (progress: FFmpegProgress) => void): Promise<FFmpeg> {
-    if (this.loading) {
-      while (this.loading) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+    // If another caller is already loading, wait on the same promise
+    if (this.loadingPromise) {
+      await this.loadingPromise;
     }
 
     if (!this.ffmpeg) {
       this.ffmpeg = new FFmpeg();
     }
 
-    // 🚀 FIXED: Cast to 'any' to allow .off() and refresh listeners
+    // Refresh the progress listener for the current caller
     (this.ffmpeg as any).off('progress'); 
     
     if (onProgress) {
@@ -49,37 +50,80 @@ export class FFmpegHelper {
 
     if (this.loaded) return this.ffmpeg;
 
-    this.loading = true;
+    // Create a single promise that all concurrent callers will await
+    this.loadingPromise = (async (): Promise<FFmpeg> => {
+      try {
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        await this.ffmpeg!.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+        this.loaded = true;
+        return this.ffmpeg!; 
+      } catch (error) {
+        // Reset so future callers can retry
+        this.loaded = false;
+        throw new Error('Failed to initialize FFmpeg. Check your network connection.');
+      } finally {
+        this.loadingPromise = null;
+      }
+    })();
+
+    return this.loadingPromise;
+  }
+
+  /**
+   * Probes video duration by decoding just the metadata.
+   * Falls back to a conservative estimate if probing fails.
+   */
+  private async probeDuration(file: File): Promise<number> {
+    const DEFAULT_DURATION = 20;
     try {
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-      await this.ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+
+      const duration = await new Promise<number>((resolve) => {
+        const timeout = setTimeout(() => resolve(DEFAULT_DURATION), 5000);
+        video.onloadedmetadata = () => {
+          clearTimeout(timeout);
+          resolve(isFinite(video.duration) && video.duration > 0 ? video.duration : DEFAULT_DURATION);
+        };
+        video.onerror = () => {
+          clearTimeout(timeout);
+          resolve(DEFAULT_DURATION);
+        };
+        video.src = url;
       });
-      this.loaded = true;
-      return this.ffmpeg; 
-    } catch (error) {
-      throw new Error('Failed to initialize FFmpeg');
-    } finally {
-      this.loading = false;
+
+      URL.revokeObjectURL(url);
+      return duration;
+    } catch {
+      return DEFAULT_DURATION;
     }
   }
 
   /**
-   * Compresses video with custom target size or quality slider
+   * Compresses video with custom target size or quality slider.
+   * When a target size is specified, the actual video duration is probed
+   * to compute an accurate bitrate (instead of assuming 20 seconds).
    */
   public async compressVideo(
     file: File, 
     options: { quality?: number; targetSize?: string; onProgress?: (p: FFmpegProgress) => void } = {}
   ): Promise<Blob> {
     const outputName = `output_${Date.now()}.mp4`;
-    let args = ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'ultrafast'];
+    const args = ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'ultrafast'];
 
     if (options.targetSize && parseFloat(options.targetSize) > 0) {
       const targetMB = parseFloat(options.targetSize);
-      const duration = 20; // Estimated duration for bitrate math
-      const totalBitrateKbps = (targetMB * 8192) / duration; 
-      const videoBitrate = Math.round(totalBitrateKbps - 128);
+      const duration = await this.probeDuration(file);
+      const AUDIO_BITRATE_KBPS = 128;
+      const BITS_PER_BYTE = 8;
+      const KB_PER_MB = 1024;
+      const totalBitrateKbps = (targetMB * KB_PER_MB * BITS_PER_BYTE) / duration; 
+      const videoBitrate = Math.max(100, Math.round(totalBitrateKbps - AUDIO_BITRATE_KBPS));
       args.push('-b:v', `${videoBitrate}k`, '-maxrate', `${videoBitrate}k`, '-bufsize', `${videoBitrate * 2}k`);
     } else {
       const quality = options.quality || 25;
@@ -121,10 +165,10 @@ export class FFmpegHelper {
       const data = await ff.readFile(outputFilename);
       
       const mimeType = outputFilename.endsWith('mp4') ? 'video/mp4' : 'audio/mpeg';
-      return new Blob([data as any], { type: mimeType });
+      return new Blob([data as Uint8Array], { type: mimeType });
     } finally {
-      await ff.deleteFile(inputName);
-      await ff.deleteFile(outputFilename);
+      try { await ff.deleteFile(inputName); } catch { /* may not exist */ }
+      try { await ff.deleteFile(outputFilename); } catch { /* may not exist */ }
     }
   }
 }

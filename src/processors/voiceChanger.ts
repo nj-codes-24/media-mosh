@@ -23,48 +23,7 @@ const createReverbImpulse = (ctx: BaseAudioContext, duration: number, decay: num
     return impulse;
 };
 
-// --- WAV ENCODER ---
-function bufferToWav(buffer: AudioBuffer) {
-    const numChannels = buffer.numberOfChannels;
-    const sampleRate = buffer.sampleRate;
-    const bitDepth = 16;
-    const bytesPerSample = bitDepth / 8;
-    const data = buffer.getChannelData(0); 
-    const dataLength = data.length * bytesPerSample;
-    const bufferLength = 44 + dataLength;
-    
-    const arrayBuffer = new ArrayBuffer(bufferLength);
-    const view = new DataView(arrayBuffer);
-    
-    const writeString = (offset: number, string: string) => {
-        for (let i = 0; i < string.length; i++) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-        }
-    };
-    
-    writeString(0, 'RIFF');
-    view.setUint32(4, 36 + dataLength, true);
-    writeString(8, 'WAVE');
-    writeString(12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true); 
-    view.setUint16(22, 1, true); 
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 1 * bytesPerSample, true);
-    view.setUint16(32, 1 * bytesPerSample, true);
-    view.setUint16(34, bitDepth, true);
-    writeString(36, 'data');
-    view.setUint32(40, dataLength, true);
-    
-    let offset = 44;
-    for (let i = 0; i < data.length; i++) {
-        const s = Math.max(-1, Math.min(1, data[i]));
-        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-        offset += 2;
-    }
-    
-    return arrayBuffer;
-}
+import { audioBufferToWavBlob } from '@/lib/wavEncoder';
 
 // --- MAIN PROCESSOR ---
 
@@ -263,9 +222,8 @@ export const voiceChanger = async (file: File, options: any): Promise<File> => {
             const renderedBuffer = await offlineCtx.startRendering();
             if (options.onProgress) options.onProgress({ ratio: 1.0 });
 
-            const wavBuffer = bufferToWav(renderedBuffer);
-            const blob = new Blob([wavBuffer], { type: 'audio/wav' });
-            resolve(new File([blob], `voice_${options.preset}.wav`, { type: 'audio/wav' }));
+            const wavBlob = audioBufferToWavBlob(renderedBuffer);
+            resolve(new File([wavBlob], `voice_${options.preset}.wav`, { type: 'audio/wav' }));
 
         } catch (e: any) {
             reject(new Error("Voice processing failed: " + e.message));

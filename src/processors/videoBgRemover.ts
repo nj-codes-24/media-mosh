@@ -212,12 +212,9 @@ export const videoBgRemoverProcessor = {
       report(1.0);
       return blob;
 
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      // Show alert so error is NEVER silent
-      alert(`Video BG Remover Error:\n\n${msg}\n\nCheck DevTools Console for details.`);
+    } catch (err: unknown) {
       console.error('[VideoBgRemover] FATAL:', err);
-      throw err;
+      throw err instanceof Error ? err : new Error(String(err));
     }
   },
 };

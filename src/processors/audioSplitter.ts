@@ -3,26 +3,9 @@
  * Uses Frequency-Domain Filtering (FFT) to separate stems by frequency bands.
  */
 
-// --- UTILITIES ---
+import { samplesToWavFile } from '@/lib/wavEncoder';
 
-const writeWavHeader = (sampleRate: number, numChannels: number, dataLength: number) => {
-    const buffer = new ArrayBuffer(44);
-    const view = new DataView(buffer);
-    view.setUint32(0, 0x52494646, false); // "RIFF"
-    view.setUint32(4, 36 + dataLength, true);
-    view.setUint32(8, 0x57415645, false); // "WAVE"
-    view.setUint32(12, 0x666d7420, false); // "fmt "
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * numChannels * 2, true);
-    view.setUint16(32, numChannels * 2, true);
-    view.setUint16(34, 16, true);
-    view.setUint32(36, 0x64617461, false); // "data"
-    view.setUint32(40, dataLength, true);
-    return buffer;
-};
+// --- UTILITIES ---
 
 // Simple FFT implementation
 class SimpleFFT {
@@ -230,15 +213,12 @@ export const audioSplitter = async (file: File, options: any): Promise<Record<st
             for(let i=0; i<data.length; i++) if(Math.abs(data[i]) > max) max = Math.abs(data[i]);
             const gain = max > 0 ? 0.9 / max : 1;
 
-            const pcmData = new Int16Array(data.length);
+            const normalized = new Float32Array(data.length);
             for(let i=0; i<data.length; i++) {
-                let s = data[i] * gain;
-                s = Math.max(-1, Math.min(1, s));
-                pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                normalized[i] = Math.max(-1, Math.min(1, data[i] * gain));
             }
 
-            const wavHeader = writeWavHeader(sampleRate, 1, pcmData.byteLength);
-            return new File([wavHeader, pcmData], `${name}_stem.wav`, { type: 'audio/wav' });
+            return samplesToWavFile(normalized, sampleRate, `${name}_stem.wav`);
         };
 
         const resultFiles: Record<string, File> = {

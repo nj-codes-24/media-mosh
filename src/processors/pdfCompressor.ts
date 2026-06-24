@@ -114,5 +114,10 @@ export const pdfCompressor = async (file: File, options: any): Promise<Blob> => 
     }
 
     report(1);
-    return bestBlob!;
+
+    if (!bestBlob) {
+      throw new Error('PDF compression failed: could not produce a valid output at any quality level.');
+    }
+
+    return bestBlob;
 };

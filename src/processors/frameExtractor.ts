@@ -1,17 +1,15 @@
-import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile } from '@ffmpeg/util';
+import { ffmpegHelper } from '@/lib/ffmpegHelper';
 import JSZip from 'jszip';
 
 export const frameExtractor = async (file: File, options: any) => {
   const { frameCount = 10, startTime = 0, endTime = 10, onProgress } = options;
   
-  const ffmpeg = new FFmpeg();
-  
-  // Load ffmpeg
-  await ffmpeg.load();
+  // Use the shared FFmpeg singleton instead of creating a new instance each time.
+  // This avoids re-downloading the ~30MB WASM binary on every invocation.
+  const ffmpeg = await ffmpegHelper.load();
 
   const inputName = 'input_video.mp4';
-  await ffmpeg.writeFile(inputName, await fetchFile(file));
+  await ffmpeg.writeFile(inputName, new Uint8Array(await file.arrayBuffer()));
 
   // Calculate the interval between frames
   const duration = endTime - startTime;
@@ -37,8 +35,7 @@ export const frameExtractor = async (file: File, options: any) => {
 
     const data = await ffmpeg.readFile(outputName);
     
-    // Fixed: Cast data as 'any' to bypass the strict Uint8Array/string union type error
-    const blob = new Blob([data as any], { type: 'image/png' });
+    const blob = new Blob([data as Uint8Array], { type: 'image/png' });
     
     folder?.file(outputName, blob);
     
