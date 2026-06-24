@@ -53,413 +53,10 @@ const parsePdfPageInput = (
 // ---------------------------------------------------------------------------
 // SUB-COMPONENT: WAVEFORM PLAYER
 // ---------------------------------------------------------------------------
-const WaveformPlayer = ({
-  src, color, isPlaying, onTogglePlay,
-}: {
-  src: string; color: string; isPlaying: boolean; onTogglePlay: () => void;
-}) => {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+import { WaveformPlayer, TranscriptItem } from './workspace/AudioPreview';
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isPlaying) audio.play(); else audio.pause();
-    const updateProgress = () => setProgress((audio.currentTime / audio.duration) * 100);
-    const setAudioData = () => setDuration(audio.duration);
-    const handleEnded = () => onTogglePlay();
-    audio.addEventListener('timeupdate', updateProgress);
-    audio.addEventListener('loadedmetadata', setAudioData);
-    audio.addEventListener('ended', handleEnded);
-    return () => {
-      audio.removeEventListener('timeupdate', updateProgress);
-      audio.removeEventListener('loadedmetadata', setAudioData);
-      audio.removeEventListener('ended', handleEnded);
-    };
-  }, [isPlaying, onTogglePlay]);
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (audioRef.current) {
-      const time = (parseFloat(e.target.value) / 100) * duration;
-      audioRef.current.currentTime = time;
-      setProgress(parseFloat(e.target.value));
-    }
-  };
-
-  return (
-    <div className="flex-1 flex items-center gap-4">
-      <audio ref={audioRef} src={src} />
-      <button
-        onClick={(e) => { e.stopPropagation(); onTogglePlay(); }}
-        className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${isPlaying ? 'bg-white text-black' : 'bg-white/10 hover:bg-white/20 text-white'}`}
-      >
-        {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-      </button>
-      <div className="flex-1 flex flex-col justify-center gap-1">
-        <div className="relative w-full h-8 group cursor-pointer">
-          <div className="absolute inset-0 flex items-center justify-between gap-[2px] opacity-30">
-            {Array.from({ length: 40 }).map((_, i) => (
-              <div key={i} className={`w-1 rounded-full ${color.replace('text-', 'bg-')}`} style={{ height: `${20 + Math.random() * 80}%` }} />
-            ))}
-          </div>
-          <input type="range" min="0" max="100" value={progress || 0} onChange={handleSeek} onClick={(e) => e.stopPropagation()} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-          <div className="absolute top-1/2 left-0 h-1 bg-white/10 w-full -translate-y-1/2 rounded-full overflow-hidden pointer-events-none">
-            <div className={`h-full ${color.replace('text-', 'bg-')}`} style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-      </div>
-      <a href={src} download="stem.wav" onClick={(e) => e.stopPropagation()} className="w-10 h-10 flex-shrink-0 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors text-zinc-400 hover:text-white">
-        <Download className="w-4 h-4" />
-      </a>
-    </div>
-  );
-};
-
-// ---------------------------------------------------------------------------
-// SUB-COMPONENT: SUBTITLE TRANSCRIPT ITEM
-// ---------------------------------------------------------------------------
-const TranscriptItem = ({
-  sub, index, isActive, onSeek, onUpdate,
-}: {
-  sub: { start: number; end: number; text: string };
-  index: number;
-  isActive: boolean;
-  onSeek: (time: number) => void;
-  onUpdate: (index: number, updated: { start: number; end: number; text: string }) => void;
-}) => {
-  const [editing, setEditing] = useState(false);
-  const [editStart, setEditStart] = useState(sub.start.toFixed(1));
-  const [editEnd, setEditEnd] = useState(sub.end.toFixed(1));
-  const [editText, setEditText] = useState(sub.text);
-
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = (s % 60).toFixed(1).padStart(4, '0');
-    return m > 0 ? `${m}:${sec}` : `${sec}s`;
-  };
-
-  const handleSave = () => {
-    onUpdate(index, {
-      start: parseFloat(editStart) || sub.start,
-      end: parseFloat(editEnd) || sub.end,
-      text: editText,
-    });
-    setEditing(false);
-  };
-
-  if (editing) {
-    return (
-      <div className="p-3 rounded-xl bg-zinc-900 border border-cyan-500/40 space-y-2">
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">Start (s)</label>
-            <input type="number" step="0.1" value={editStart} onChange={e => setEditStart(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500" />
-          </div>
-          <div className="flex-1">
-            <label className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">End (s)</label>
-            <input type="number" step="0.1" value={editEnd} onChange={e => setEditEnd(e.target.value)} className="w-full bg-black border border-white/10 rounded-lg px-2 py-1.5 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500" />
-          </div>
-        </div>
-        <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={2} className="w-full bg-black border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 resize-none" />
-        <div className="flex gap-2">
-          <button onClick={handleSave} className="flex-1 py-1.5 bg-cyan-500 text-black rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-colors">Save</button>
-          <button onClick={() => setEditing(false)} className="py-1.5 px-3 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase text-zinc-500 hover:text-white transition-colors"><X className="w-3 h-3" /></button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`group flex items-start gap-2 p-2.5 rounded-xl transition-all cursor-pointer ${isActive ? 'bg-cyan-500/15 border border-cyan-500/30' : 'bg-white/[0.03] border border-transparent hover:bg-white/[0.06] hover:border-white/10'}`}>
-      <button onClick={() => onSeek(sub.start)} className="flex-1 flex items-start gap-2 text-left">
-        <div className="flex flex-col gap-0.5 pt-0.5 min-w-[48px]">
-          <span className={`font-mono text-[9px] font-bold ${isActive ? 'text-cyan-400' : 'text-zinc-600'}`}>{formatTime(sub.start)}</span>
-          <span className="font-mono text-[8px] text-zinc-700">→{formatTime(sub.end)}</span>
-        </div>
-        <ChevronRight className={`w-3 h-3 mt-0.5 flex-shrink-0 transition-colors ${isActive ? 'text-cyan-500' : 'text-zinc-700 group-hover:text-zinc-500'}`} />
-        <p className={`text-[10px] leading-relaxed font-medium transition-colors ${isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}>{sub.text}</p>
-      </button>
-      <button onClick={() => setEditing(true)} className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-white/10 text-zinc-600 hover:text-white transition-all flex-shrink-0 mt-0.5">
-        <Pencil className="w-3 h-3" />
-      </button>
-    </div>
-  );
-};
-
-// ---------------------------------------------------------------------------
-// SUB-COMPONENT: PDF SINGLE PAGE CANVAS
-// ---------------------------------------------------------------------------
-
-const PdfSinglePageCanvas = ({ srcFile, pageIndex, rotation, fileObject, sourceUrl }: { srcFile: string | null; pageIndex: number; rotation: number; fileObject?: File; sourceUrl?: string; }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [pdfPage, setPdfPage] = useState<any>(null);
-  const [renderError, setRenderError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setPdfPage(null);
-    setRenderError(null);
-
-    const fetchPage = async () => {
-      if (sourceUrl) return;
-      if (!fileObject && !srcFile) return;
-
-      try {
-        const pdfjsLib = await getPdfjsLib();
-
-        let dataToLoad: any;
-        if (fileObject) {
-          const arrayBuffer = await fileObject.arrayBuffer();
-          dataToLoad = { data: new Uint8Array(arrayBuffer) };
-        } else {
-          dataToLoad = { url: srcFile };
-        }
-
-        if (cancelled) return;
-
-        const loadingTask = pdfjsLib.getDocument(dataToLoad);
-        const pdf = await loadingTask.promise;
-        if (cancelled) return;
-
-        const page = await pdf.getPage(pageIndex + 1);
-        if (!cancelled) setPdfPage(page);
-      } catch (err: any) {
-        console.error('[PdfSinglePageCanvas] Fetch error:', err);
-        if (!cancelled) setRenderError(err?.message || 'Failed to load page');
-      }
-    };
-
-    fetchPage();
-    return () => { cancelled = true; };
-  }, [srcFile, fileObject, sourceUrl, pageIndex]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let renderTask: any = null;
-
-    if (sourceUrl) {
-      const img = new Image();
-      img.onload = () => {
-        const isRotated = rotation === 90 || rotation === 270;
-        canvas.width = isRotated ? img.height : img.width;
-        canvas.height = isRotated ? img.width : img.height;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        ctx.restore();
-      };
-      img.src = sourceUrl;
-      return;
-    }
-
-    if (!pdfPage) return;
-
-    try {
-      const viewport = pdfPage.getViewport({ scale: 2.0, rotation });
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      renderTask = pdfPage.render({ canvasContext: ctx, viewport } as any);
-      renderTask.promise.catch((err: any) => {
-        if (err?.name !== 'RenderingCancelledException') {
-          console.error('[PdfSinglePageCanvas] Render error:', err);
-        }
-      });
-    } catch (err) {
-      console.error('[PdfSinglePageCanvas] Canvas setup error:', err);
-    }
-
-    return () => { renderTask?.cancel?.(); };
-  }, [pdfPage, rotation, sourceUrl]);
-
-  if (renderError) {
-    return (
-      <div className="flex items-center justify-center bg-white rounded-sm shadow-2xl" style={{ width: 300, height: 400 }}>
-        <div className="text-center p-4">
-          <p className="text-red-400 text-xs font-bold mb-1">Preview Error</p>
-          <p className="text-zinc-500 text-[10px] font-mono">{renderError}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!pdfPage && !sourceUrl) {
-    return (
-      <div className="flex items-center justify-center bg-white rounded-sm shadow-2xl" style={{ width: 300, height: 400 }}>
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-      </div>
-    );
-  }
-
-  return <canvas ref={canvasRef} className="max-w-full max-h-full object-contain shadow-2xl rounded-sm" />;
-};
-
-
-// ---------------------------------------------------------------------------
-// SUB-COMPONENT: PDF CANVAS VIEWER
-// ---------------------------------------------------------------------------
-const PdfPageSlot = ({
-  pdfPage,
-  pageNum,
-  slotRef,
-}: {
-  pdfPage: any;
-  pageNum: number;
-  slotRef: (el: HTMLDivElement | null) => void;
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const renderTask = useRef<any>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !pdfPage) return;
-
-    renderTask.current?.cancel?.();
-
-    const viewport = pdfPage.getViewport({ scale: 1.6 });
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    renderTask.current = pdfPage.render({ canvasContext: ctx, viewport } as any);
-    renderTask.current.promise.catch((err: any) => {
-      if (err?.name !== 'RenderingCancelledException') console.error(err);
-    });
-
-    return () => { renderTask.current?.cancel?.(); };
-  }, [pdfPage]);
-
-  return (
-    <div
-      ref={slotRef}
-      data-page={pageNum}
-      className="flex-shrink-0 shadow-2xl rounded overflow-hidden bg-white relative"
-      style={{ maxWidth: '100%' }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{ display: 'block', maxWidth: '100%', height: 'auto' }}
-      />
-    </div>
-  );
-};
-
-const PdfCanvasViewer = ({
-  src,
-  onPageChange,
-}: {
-  src: string;
-  onPageChange: (page: number) => void;
-}) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [pdfPages, setPdfPages] = useState<any[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const pageEls = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setPdfPages([]);
-    setLoadError(null);
-    pageEls.current = [];
-
-    const loadPdf = async () => {
-      try {
-        const pdfjsLib = await getPdfjsLib();
-        if (cancelled) return;
-
-        const loadingTask = pdfjsLib.getDocument({ url: src });
-        const pdf = await loadingTask.promise;
-        if (cancelled) return;
-
-        const pagePromises = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
-          pagePromises.push(pdf.getPage(i));
-        }
-
-        const pages = await Promise.all(pagePromises);
-        if (!cancelled) setPdfPages(pages);
-      } catch (err: any) {
-        console.error("[PdfCanvasViewer] Error:", err);
-        if (!cancelled) setLoadError(err.message || 'Failed to parse PDF preview.');
-      }
-    };
-
-    loadPdf();
-    return () => { cancelled = true; };
-  }, [src]);
-
-  useEffect(() => {
-    if (pdfPages.length === 0) return;
-    const container = containerRef.current;
-    if (!container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let bestRatio = 0;
-        let bestPage = 1;
-        entries.forEach((entry) => {
-          if (entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            bestPage = Number((entry.target as HTMLElement).dataset.page);
-          }
-        });
-        if (bestRatio > 0) onPageChange(bestPage);
-      },
-      { root: container, threshold: [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0] }
-    );
-
-    pageEls.current.forEach((el) => { if (el) observer.observe(el); });
-    return () => observer.disconnect();
-  }, [pdfPages, onPageChange]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="w-full h-full overflow-y-auto custom-scrollbar flex flex-col items-center gap-4 py-6 px-4 bg-zinc-900/80"
-    >
-      {loadError ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center text-red-500 shadow-lg">
-            <X className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-red-400">Preview Error</p>
-            <p className="text-[10px] text-zinc-400 mt-2 max-w-[250px] mx-auto bg-black/50 p-3 rounded-lg border border-white/5 font-mono">{loadError}</p>
-            <p className="text-[9px] text-zinc-500 mt-4 max-w-xs font-bold uppercase tracking-widest">
-              (You can still safely use the processor tools on the left)
-            </p>
-          </div>
-        </div>
-      ) : pdfPages.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center min-h-[200px]">
-          <div className="text-center space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-cyan-500 mx-auto" />
-            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-600">Rendering Pages…</p>
-          </div>
-        </div>
-      ) : (
-        pdfPages.map((pdfPage, idx) => (
-          <PdfPageSlot
-            key={idx}
-            pdfPage={pdfPage}
-            pageNum={idx + 1}
-            slotRef={(el) => { pageEls.current[idx] = el; }}
-          />
-        ))
-      )}
-    </div>
-  );
-};
+import { PdfSinglePageCanvas, PdfPageSlot, PdfCanvasViewer } from './workspace/PdfPreview';
+import { MediaDropzone } from './workspace/MediaDropzone';
 
 // ---------------------------------------------------------------------------
 // MAIN COMPONENT
@@ -2285,89 +1882,48 @@ export default function UniversalWorkspace({ tool, onProcess }: { tool: ToolMeta
           <main className={`ws-main flex-1 relative flex flex-col items-center justify-center ${isPdfTool ? 'p-2 md:p-4' : 'p-3 md:p-8'} bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.02)_0%,_transparent_70%)]`}>
 
             {isTTS ? (
-              <div className="w-full h-full flex flex-col items-center justify-center max-w-4xl">
-                <div className="w-full relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                  <div className="relative w-full bg-black border border-white/10 rounded-[2rem] p-8 shadow-2xl">
-                    <div className="flex justify-between items-center mb-6">
-                      <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Script Input</span>
-                      <span className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">{textInput.length} chars</span>
-                    </div>
-                    <textarea value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Type something here to convert to speech..." className="ws-tts-textarea w-full h-[200px] md:h-[400px] bg-transparent text-base md:text-xl font-medium text-white placeholder:text-zinc-700 focus:outline-none resize-none custom-scrollbar" />
-                  </div>
-                </div>
-              </div>
+              <MediaDropzone
+                tool={tool}
+                isTTS={isTTS}
+                isPdfMultiInput={isPdfMultiInput}
+                isDragging={isDragging}
+                textInput={textInput}
+                setTextInput={setTextInput}
+                handleDragOver={handleDragOver}
+                handleDragLeave={handleDragLeave}
+                handleDrop={handleDrop}
+                fileInputRef={fileInputRef}
+                getFileInputAccept={getFileInputAccept}
+                handleFileSelect={handleFileSelect}
+                handleUrlSubmit={handleUrlSubmit}
+                imageUrlInput={imageUrlInput}
+                setImageUrlInput={setImageUrlInput}
+                setUrlError={setUrlError}
+                isFetchingUrl={isFetchingUrl}
+                urlError={urlError}
+              />
             ) : (
               !file ? (
-                <div className="w-full max-w-2xl flex flex-col items-center gap-6 z-10">
-                  {/* MAIN DROPZONE */}
-                  <motion.div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    whileHover={{ scale: 1.01, borderColor: 'rgba(6,182,212,0.4)', backgroundColor: 'rgba(255,255,255,0.02)' }}
-                    className={`ws-dropzone w-full py-8 md:py-16 border rounded-[1.5rem] md:rounded-[2.5rem] flex flex-col items-center justify-center gap-3 md:gap-5 cursor-pointer group transition-all duration-500 shadow-2xl relative overflow-hidden ${isDragging
-                      ? 'border-cyan-500 bg-cyan-500/10 scale-[1.02]'
-                      : 'border-white/5 bg-white/[0.01]'
-                      }`}
-                  >
-                    <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 pointer-events-none">
-                      {isPdfMultiInput ? <Layers className="w-6 h-6 md:w-8 md:h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" /> : <Upload className="w-6 h-6 md:w-8 md:h-8 text-zinc-500 group-hover:text-cyan-400 transition-colors" />}
-                    </div>
-                    <div className="text-center space-y-1.5 pointer-events-none">
-                      <p className="text-[11px] font-black uppercase tracking-[0.4em] text-zinc-400 group-hover:text-cyan-400 transition-colors">
-                        {isDragging ? 'Drop Media Here' : `Import ${isPdfMultiInput ? 'Multiple Files' : 'Source Media'}`}
-                      </p>
-                      <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
-                        {isDragging ? 'Release to upload' : 'Drag & Drop, Paste (Ctrl+V) or Click to Browse'}
-                      </p>
-                    </div>
-                    <input ref={fileInputRef} type="file" multiple={isPdfMultiInput ? true : undefined} accept={getFileInputAccept()} className="hidden" onChange={(e) => e.target.files && handleFileSelect(e.target.files)} />
-                  </motion.div>
-
-                  {/* DIVIDER */}
-                  {tool.category === 'image' && (
-                    <div className="flex items-center w-full max-w-sm gap-4 opacity-40">
-                      <div className="flex-1 h-px bg-gradient-to-r from-transparent to-white/50"></div>
-                      <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Or</span>
-                      <div className="flex-1 h-px bg-gradient-to-l from-transparent to-white/50"></div>
-                    </div>
-                  )}
-
-                  {/* URL INPUT BAR */}
-                  {tool.category === 'image' && (
-                    <form onSubmit={handleUrlSubmit} className="w-full max-w-xl relative group">
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                      <div className="relative flex items-center bg-black/40 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl focus-within:border-cyan-500/50 focus-within:bg-black/60 transition-all shadow-xl">
-                        <input
-                          type="url"
-                          placeholder="Paste image URL here..."
-                          value={imageUrlInput}
-                          onChange={(e) => {
-                            setImageUrlInput(e.target.value);
-                            setUrlError(null);
-                          }}
-                          className="flex-1 bg-transparent px-6 py-4 text-sm font-medium text-white placeholder:text-zinc-600 focus:outline-none"
-                        />
-                        <div className="pr-2">
-                          <button
-                            type="submit"
-                            disabled={!imageUrlInput || isFetchingUrl}
-                            className="px-6 py-2.5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-cyan-400 transition-all disabled:opacity-20 flex items-center justify-center min-w-[110px] gap-2"
-                          >
-                            {isFetchingUrl ? <Loader2 className="w-3.5 h-3.5 animate-spin text-black" /> : 'Load URL'}
-                          </button>
-                        </div>
-                      </div>
-                      {urlError && (
-                        <p className="absolute -bottom-7 left-0 w-full text-center text-[10px] text-red-400 font-bold uppercase tracking-widest bg-black/50 py-1 rounded-lg">
-                          {urlError}
-                        </p>
-                      )}
-                    </form>
-                  )}
-                </div>
+                <MediaDropzone
+                  tool={tool}
+                  isTTS={isTTS}
+                  isPdfMultiInput={isPdfMultiInput}
+                  isDragging={isDragging}
+                  textInput={textInput}
+                  setTextInput={setTextInput}
+                  handleDragOver={handleDragOver}
+                  handleDragLeave={handleDragLeave}
+                  handleDrop={handleDrop}
+                  fileInputRef={fileInputRef}
+                  getFileInputAccept={getFileInputAccept}
+                  handleFileSelect={handleFileSelect}
+                  handleUrlSubmit={handleUrlSubmit}
+                  imageUrlInput={imageUrlInput}
+                  setImageUrlInput={setImageUrlInput}
+                  setUrlError={setUrlError}
+                  isFetchingUrl={isFetchingUrl}
+                  urlError={urlError}
+                />
               ) : (
                 <div className={`w-full h-full flex flex-col items-center ${isPdfTool ? 'max-w-[95%]' : 'max-w-5xl'}`}>
 

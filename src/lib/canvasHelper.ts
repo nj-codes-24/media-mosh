@@ -542,40 +542,7 @@ export class CanvasHelper {
     );
   }
 
-  /**
-   * Generate QR code
-   */
-  static async generateQRCode(
-    text: string,
-    size: number = 512,
-    options: {
-      foreground?: string;
-      background?: string;
-      errorCorrection?: 'L' | 'M' | 'Q' | 'H';
-    } = {}
-  ): Promise<Blob> {
-    const {
-      foreground = '#000000',
-      background = '#ffffff'
-    } = options;
 
-    // Note: In production, use a proper QR library like qrcode
-    // This is a placeholder implementation
-    const { canvas, ctx } = this.getCanvas();
-
-    canvas.width = size;
-    canvas.height = size;
-
-    // Draw background
-    ctx.fillStyle = background;
-    ctx.fillRect(0, 0, size, size);
-
-    // Draw placeholder QR pattern
-    ctx.fillStyle = foreground;
-    ctx.fillText('QR: ' + text, 10, 50);
-
-    return this.canvasToBlob(canvas, 'image/png');
-  }
 
   /**
    * Clean up resources

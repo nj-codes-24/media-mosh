@@ -70,8 +70,8 @@ const resampleAudio = async (audioBuffer: AudioBuffer, targetRate: number): Prom
 
 export const subtitleProcessor = {
     process: async (file: File, options: { onProgress?: (val: number) => void } = {}) => {
-        console.log('🎬 Subtitle Processor V4 Started');
-        console.log('📁 File:', file.name, file.type, file.size, 'bytes');
+        console.log('[Subtitle Processor] Started');
+        console.log('[Subtitle Processor] File:', file.name, file.type, file.size, 'bytes');
 
         try {
             // 1. Load model
@@ -83,7 +83,7 @@ export const subtitleProcessor = {
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await nativeCtx.decodeAudioData(arrayBuffer);
 
-            console.log('🎤 Decoded audio (native):', {
+            console.log('[Subtitle Processor] Decoded audio:', {
                 duration: audioBuffer.duration,
                 nativeSampleRate: audioBuffer.sampleRate,
                 channels: audioBuffer.numberOfChannels,
@@ -92,20 +92,20 @@ export const subtitleProcessor = {
             await nativeCtx.close();
 
             // 3. Resample to 16000Hz using OfflineAudioContext (the correct approach)
-            console.log(`🔄 Resampling from ${audioBuffer.sampleRate}Hz → ${TARGET_SAMPLE_RATE}Hz...`);
+            console.log(`[Subtitle Processor] Resampling from ${audioBuffer.sampleRate}Hz → ${TARGET_SAMPLE_RATE}Hz...`);
             const audioData = await resampleAudio(audioBuffer, TARGET_SAMPLE_RATE);
 
-            console.log(`✅ Resampled: ${audioData.length} samples @ ${TARGET_SAMPLE_RATE}Hz`);
+            console.log(`[Subtitle Processor] Resampled: ${audioData.length} samples @ ${TARGET_SAMPLE_RATE}Hz`);
 
             // Quick sanity check — detect if audio is silent
             const maxAmplitude = audioData.reduce((max, v) => Math.max(max, Math.abs(v)), 0);
-            console.log(`🔊 Max amplitude after resample: ${maxAmplitude.toFixed(4)}`);
+            console.log(`[Subtitle Processor] Max amplitude after resample: ${maxAmplitude.toFixed(4)}`);
             if (maxAmplitude < 0.001) {
-                console.warn('⚠️ Audio appears to be nearly silent after resampling!');
+                console.warn('[Subtitle Processor] Audio appears to be nearly silent after resampling!');
             }
 
             // 4. Run Whisper inference
-            console.log('🤖 Running Whisper inference...');
+            console.log('[Subtitle Processor] Running Whisper inference...');
             const result = await transcriber(audioData, {
                 chunk_length_s: 30,
                 stride_length_s: 5,
@@ -114,22 +114,22 @@ export const subtitleProcessor = {
                 temperature: 0.0,
             });
 
-            console.log('🤖 Raw Whisper Result:', JSON.stringify(result, null, 2));
+            console.log('[Subtitle Processor] Raw Whisper Result:', JSON.stringify(result, null, 2));
 
             // 5. Normalize result into chunks array
             let chunks: any[] = [];
 
             if (result && 'chunks' in result && Array.isArray(result.chunks)) {
                 chunks = result.chunks;
-                console.log(`✅ Found ${chunks.length} chunks`);
+                console.log(`[Subtitle Processor] Found ${chunks.length} chunks`);
             } else if (result && 'text' in result && result.text) {
-                console.log('⚠️ No chunks returned, using full text fallback');
+                console.log('[Subtitle Processor] No chunks returned, using full text fallback');
                 chunks = [{
                     text: result.text,
                     timestamp: [0, audioBuffer.duration]
                 }];
             } else {
-                console.log('❌ No valid result from Whisper');
+                console.log('[Subtitle Processor] No valid result from Whisper');
                 return {
                     chunks: [{ text: "No speech detected.", timestamp: [0, audioBuffer.duration] }]
                 };
@@ -146,8 +146,8 @@ export const subtitleProcessor = {
                 }))
                 .filter((chunk: any) => chunk.text.length > 0);
 
-            console.log(`🧹 ${cleanedChunks.length} subtitle chunks after cleaning`);
-            if (cleanedChunks[0]) console.log('📝 First chunk:', cleanedChunks[0]);
+            console.log(`[Subtitle Processor] ${cleanedChunks.length} chunks after cleaning`);
+            if (cleanedChunks[0]) console.log('[Subtitle Processor] First chunk:', cleanedChunks[0]);
 
             if (cleanedChunks.length === 0) {
                 return {
@@ -161,7 +161,7 @@ export const subtitleProcessor = {
             return { chunks: cleanedChunks };
 
         } catch (error) {
-            console.error("❌ Subtitle Processor Error:", error);
+            console.error("[Subtitle Processor] Error:", error);
             throw new Error(`Failed to process subtitles: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
