@@ -181,84 +181,87 @@ const applyUnsharpMask = (data: Uint8ClampedArray, w: number, h: number) => {
 
 export const photoRestorer = async (file: File, options: any): Promise<File> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
       const updateProgress = (ratio: number) => {
          if (options.onProgress) options.onProgress({ ratio });
       };
   
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-  
-          if (!ctx) {
-            reject(new Error('Canvas context failed'));
-            return;
-          }
-  
-          // Resize large images for speed, but keep enough res for print
-          const MAX_DIM = 2000;
-          let w = img.width;
-          let h = img.height;
-          if (w > MAX_DIM || h > MAX_DIM) {
-             const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
-             w *= ratio;
-             h *= ratio;
-          }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
 
-          canvas.width = w;
-          canvas.height = h;
-          ctx.drawImage(img, 0, 0, w, h);
-          
-          const imageData = ctx.getImageData(0, 0, w, h);
-          const data = imageData.data;
-          
-          updateProgress(0.1);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+  
+        if (!ctx) {
+          reject(new Error('Canvas context failed'));
+          return;
+        }
+  
+        // Resize large images for speed, but keep enough res for print
+        const MAX_DIM = 2000;
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+           const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
+           w *= ratio;
+           h *= ratio;
+        }
 
-          try {
-              // 1. REPAIR: Remove physical defects first
-              if (options.repair) {
-                  applySurgicalRepair(data, w, h);
-                  updateProgress(0.4);
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const data = imageData.data;
+        
+        updateProgress(0.1);
+
+        try {
+            // 1. REPAIR: Remove physical defects first
+            if (options.repair) {
+                applySurgicalRepair(data, w, h);
+                updateProgress(0.4);
+            }
+
+            // 2. ENHANCE: Fix exposure/haze (Critical for old photos)
+            // We always run this to fix the "gray" look
+            applySmartDehaze(data);
+            updateProgress(0.6);
+            
+            // 3. COLOR: Apply vintage grading
+            if (options.colorize) {
+                applyVintageColor(data);
+                updateProgress(0.8);
+            }
+            
+            // 4. SHARPEN: Final polish to bring back edges
+            applyUnsharpMask(data, w, h);
+            updateProgress(0.95);
+
+            ctx.putImageData(imageData, 0, 0);
+    
+            canvas.toBlob((blob) => {
+              updateProgress(1);
+              if (!blob) {
+                reject(new Error('Restoration failed'));
+                return;
               }
+              const newFile = new File([blob], `restored_${file.name}`, { type: 'image/png' });
+              resolve(newFile);
+            }, 'image/png');
 
-              // 2. ENHANCE: Fix exposure/haze (Critical for old photos)
-              // We always run this to fix the "gray" look
-              applySmartDehaze(data);
-              updateProgress(0.6);
-              
-              // 3. COLOR: Apply vintage grading
-              if (options.colorize) {
-                  applyVintageColor(data);
-                  updateProgress(0.8);
-              }
-              
-              // 4. SHARPEN: Final polish to bring back edges
-              applyUnsharpMask(data, w, h);
-              updateProgress(0.95);
+        } catch (err) {
+            reject(err);
+        }
+      };
 
-              ctx.putImageData(imageData, 0, 0);
-      
-              canvas.toBlob((blob) => {
-                updateProgress(1);
-                if (!blob) {
-                  reject(new Error('Restoration failed'));
-                  return;
-                }
-                const newFile = new File([blob], `restored_${file.name}`, { type: 'image/png' });
-                resolve(newFile);
-              }, 'image/png');
-
-          } catch (err) {
-              reject(err);
-          }
-        };
-  
-        img.onerror = () => reject(new Error('Failed to load image'));
-        if (event.target?.result) img.src = event.target.result as string;
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load image'));
       };
       
-      reader.readAsDataURL(file);
+      img.src = url;
     });
 };

@@ -683,6 +683,14 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
   }, [isPdfManager, pdfManagerActiveId]);
 
   const handleReset = () => {
+    // 🧹 CLEANUP: Prevent memory leaks by revoking all ObjectURLs
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+    if (compositeUrl) URL.revokeObjectURL(compositeUrl);
+    if (customBgUrl) URL.revokeObjectURL(customBgUrl);
+    if (stems) Object.values(stems).forEach(url => URL.revokeObjectURL(url));
+    pdfManagerPages.forEach(p => { if (p.sourceUrl) URL.revokeObjectURL(p.sourceUrl); });
+
     setFile(null);
     setFiles([]);
     setActiveFile(null);
@@ -725,7 +733,11 @@ export default function UniversalWorkspace({ tool, onProcess }: any) {
     if (addFileInputRef.current) addFileInputRef.current.value = '';
   };
 
+  // Reset when tool changes
   useEffect(() => { handleReset(); }, [tool.id]);
+
+  // Clean up on unmount
+  useEffect(() => { return () => handleReset(); }, []);
 
   useEffect(() => {
     if (!pdfGridRef.current || !isPdfRemovePage) return;

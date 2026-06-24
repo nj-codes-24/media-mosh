@@ -407,3 +407,63 @@
 .cscroll::-webkit-scrollbar-track {
   background: transparent;
 }
+.cscroll::-webkit-scrollbar-thumb:hover{
+  background: rgba(255,68,0,0.35);
+}
+
+/* ── Extracted from page.tsx ──────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(200%) skewX(-20deg); }
+}
+
+.shimmer-container {
+  position: absolute;
+  top: 0; left: 0; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer-soon {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(200%) skewX(-20deg); }
+}
+
+.shimmer-soon {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer-soon 2s infinite;
+  pointer-events: none;
+}
+
+.grain-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: overlay;
+}
+
+.tool-card .tool-icon { transition: color 0.2s ease; }
+.tool-card:hover:not(:disabled) .tool-icon { color: #FF4400 !important; }
+
+.tool-card .tool-icon-box { transition: background 0.2s ease, border-color 0.2s ease; }
+.tool-card:hover:not(:disabled) .tool-icon-box {
+  background: rgba(255,68,0,0.1) !important;
+  border-color: rgba(255,68,0,0.4) !important;
+}
+
+.tool-card:hover:not(:disabled) .tool-title { color: rgba(255,255,255,0.95) !important; }
+
+.tool-card:hover:not(:disabled) {
+  background: linear-gradient(145deg, rgba(255,68,0,0.06) 0%, rgba(255,255,255,0.02) 100%) !important;
+  border-color: rgba(255,68,0,0.4) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+.logo-btn:hover .logo-c { box-shadow: 0 0 8px #FF4400, 0 0 16px #FF4400 !important; }
+.logo-btn:hover .logo-label { color: #FFFFFF !important; text-shadow: 0 0 12px rgba(255,68,0,0.5); }
