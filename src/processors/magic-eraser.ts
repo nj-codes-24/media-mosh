@@ -75,7 +75,7 @@ export async function process(file: File, options: any): Promise<Blob> {
           return canvas.toBlob(b => b ? resolve(b) : reject(new Error('No blob')), 'image/png');
         }
 
-        console.log(`[Magic Eraser] Erasing ${maskCount} pixels (${(maskCount/(w*h)*100).toFixed(1)}% of image)`);
+
 
         // 2️⃣ Multi-Pass Diffusion with Priority Queue
         // Fill from edges inward for better quality
@@ -160,7 +160,7 @@ export async function process(file: File, options: any): Promise<Blob> {
           }
         }
 
-        console.log(`[Magic Eraser] Inpainting complete in ${iteration} iterations`);
+
 
         // 3️⃣ Final pass: Fill any remaining stubborn pixels
         for (let y = 0; y < h; y++) {
@@ -246,7 +246,7 @@ export async function process(file: File, options: any): Promise<Blob> {
           URL.revokeObjectURL(url);
           URL.revokeObjectURL(maskUrl);
           if (blob) {
-            console.log(`[Magic Eraser] Result ready (${(blob.size / 1024).toFixed(1)}KB)`);
+
             resolve(blob);
           } else {
             reject(new Error('Failed to create blob'));

@@ -84,7 +84,7 @@ export const pdfCompressor = async (file: File, options: any): Promise<Blob> => 
 
         report(0.50 + ((attempt + 1) / MAX_ATTEMPTS) * 0.45); // takes us to 0.95
 
-        console.log(`[pdfCompressor] Try ${attempt + 1}: Q=${q.toFixed(3)} -> ${(resultBlob.size / 1024 / 1024).toFixed(2)}MB (Target: ${(targetBytes / 1024 / 1024).toFixed(2)}MB)`);
+
 
         // Track the closest blob that is <= targetBytes array
         const diff = targetBytes - resultBlob.size;

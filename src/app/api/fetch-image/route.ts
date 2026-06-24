@@ -86,6 +86,44 @@ async function safeFetch(url: string): Promise<Response> {
   }
 }
 
+/**
+ * Reads a response stream and limits the maximum bytes downloaded.
+ * This prevents Out-Of-Memory (OOM) attacks from malicious infinite streams.
+ */
+async function readStreamSafely(response: Response, maxSize: number): Promise<Uint8Array> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('Response body is unreadable');
+
+  const chunks: Uint8Array[] = [];
+  let bytesRead = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      if (value) {
+        bytesRead += value.length;
+        if (bytesRead > maxSize) {
+          await reader.cancel('Stream exceeded max size');
+          throw new Error(`File exceeds the ${maxSize / 1024 / 1024} MB size limit.`);
+        }
+        chunks.push(value);
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const result = new Uint8Array(bytesRead);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return result;
+}
+
 // ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
@@ -111,13 +149,10 @@ export async function GET(request: Request) {
 
     // 1. IF IT'S ALREADY AN IMAGE, RETURN IT DIRECTLY
     if (contentType.startsWith('image/')) {
-      const blob = await response.blob();
-      if (blob.size > MAX_BODY_BYTES) {
-        throw new Error('Image exceeds the 25 MB size limit.');
-      }
-      return new NextResponse(blob, {
+      const data = await readStreamSafely(response, MAX_BODY_BYTES);
+      return new NextResponse(Buffer.from(data), {
         headers: {
-          'Content-Type': blob.type,
+          'Content-Type': contentType,
           'Cache-Control': 'public, max-age=31536000, immutable',
         },
       });
@@ -125,7 +160,8 @@ export async function GET(request: Request) {
 
     // 2. IF IT IS A WEBPAGE, SCAN FOR THE MAIN IMAGE (Open Graph)
     if (contentType.includes('text/html')) {
-      const html = await response.text();
+      const htmlBytes = await readStreamSafely(response, MAX_BODY_BYTES);
+      const html = new TextDecoder().decode(htmlBytes);
       
       let imageUrl: string | null = null;
       const ogMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) || 
@@ -158,14 +194,11 @@ export async function GET(request: Request) {
         throw new Error('The extracted link was not a valid image.');
       }
 
-      const blob = await imageResponse.blob();
-      if (blob.size > MAX_BODY_BYTES) {
-        throw new Error('Image exceeds the 25 MB size limit.');
-      }
+      const imageData = await readStreamSafely(imageResponse, MAX_BODY_BYTES);
 
-      return new NextResponse(blob, {
+      return new NextResponse(Buffer.from(imageData), {
         headers: {
-          'Content-Type': blob.type,
+          'Content-Type': imageContentType,
           'Cache-Control': 'public, max-age=31536000, immutable',
         },
       });

@@ -18,7 +18,7 @@ export const bgRemoverProcessor = {
       const ort = await import('onnxruntime-web');
       ort.env.wasm.wasmPaths = '/';
     } catch (e) {
-      console.warn('[BG-Remover] Could not configure WASM paths:', e);
+
     }
 
     // ⚡ Dynamically import the background removal module
@@ -28,7 +28,7 @@ export const bgRemoverProcessor = {
     const removeBackground = imglyModule.default || imglyModule.removeBackground || imglyModule;
 
     if (typeof removeBackground !== 'function') {
-      console.error("Imported Module:", imglyModule);
+
       throw new Error("Background removal engine failed to load correctly.");
     }
 
@@ -40,7 +40,7 @@ export const bgRemoverProcessor = {
           type: 'foreground'
         },
         progress: (key: string, current: number, total: number) => {
-          console.log(`[BG-Remover] ${key}: ${current}/${total}`);
+
         }
       });
       return resultBlob;
